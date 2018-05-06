@@ -6,22 +6,32 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class Main {
 
+    // map details pre-configured
     public static final int MIN_ZOOM = 0;
-    public static final int MAX_ZOOM = 21;
+    public static final int MAX_ZOOM = 100;
+    //private static final int ZOOM_VALUE = 10; //map.html value
+    
+    //data structures to hold data from DB
     public static Route[] allRoutes;
     public static Marker[] allMarkers;
     public static Poi[] allPois;
-    private static final int ZOOM_VALUE = 10; //map.html value
+    
     public static Color off = Color.lightGray;
     public static Color on = Color.white;
     public static String markerType = "res/dots.png";
     
+    /**
+     * will add text parameter string to the given message bar, now only to
+     * bottom one
+     * 
+     * @param messageBar
+     * @param text
+     */
     public static void addText(JTextArea messageBar, String text){
         messageBar.setText(messageBar.getText() + "\n" + text);
     }
@@ -51,7 +61,7 @@ public class Main {
         addressPane.add(new JLabel(" Betöltött útvonal: "));
         addressPane.add(loadedRoute);
         
-        JButton createRoute = new JButton("Mentés új útvonalként");
+        JButton createRoute = new JButton("Mentés új útvonalként (save to DB)");
         createRoute.setPreferredSize(new Dimension(150, 30));
         createRoute.setBorder(null);
         createRoute.setBackground(new Color(66,133,244));
@@ -59,7 +69,7 @@ public class Main {
         createRoute.setOpaque(true);
 
         
-        JButton modifyRoute = new JButton("Módosítások mentése");
+        JButton modifyRoute = new JButton("Módosítások mentése (to DB)");
         modifyRoute.setPreferredSize(new Dimension(150, 30));
         modifyRoute.setBorder(null);
         modifyRoute.setForeground(Color.WHITE);
@@ -77,27 +87,29 @@ public class Main {
             allRoutesList.add(allRoutes[i].getRouteName());
         }
         
-        JButton openRoute = new JButton("Útvonal betöltése");
+        JButton openRoute = new JButton("Útvonal betöltése (MAP-re)");
         openRoute.setPreferredSize(new Dimension(150, 30));
         openRoute.setBorder(null);
         openRoute.setForeground(Color.WHITE);
         openRoute.setBackground(new Color(66,133,244));
         openRoute.setOpaque(true);
         
-        JButton deleteRoute = new JButton("Útvonal törlése");
+        JButton deleteRoute = new JButton("Útvonal törlése (DB-bol)");
         deleteRoute.setPreferredSize(new Dimension(150, 30));
         deleteRoute.setBorder(null);
         deleteRoute.setForeground(Color.WHITE);
         deleteRoute.setBackground(new Color(66,133,244));
         deleteRoute.setOpaque(true);
         
-        JButton clearRoute = new JButton("Betöltés törlése");
+        JButton clearRoute = new JButton("Betöltés törlése (clear MAP)");
         clearRoute.setPreferredSize(new Dimension(150, 30));
         clearRoute.setBorder(null);
         clearRoute.setForeground(Color.WHITE);
         clearRoute.setBackground(new Color(66,133,244));
         clearRoute.setOpaque(true);
         
+// adding ActionListeners to JButtons
+        // createRoute
         createRoute.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -215,6 +227,8 @@ public class Main {
         routeTools.add(clearRoute);
         routeTools.setLayout(new GridLayout(routeTools.getComponentCount(),1,1,1));
         
+        // create marker management part of UI while also uploading it with 
+        // data read from the DB
         allMarkers = manageDatabase.readMarkers();
         JPanel allMarkersList = new JPanel();
         int row = (int)Math.floor(allMarkers.length/4);
@@ -227,10 +241,7 @@ public class Main {
         }
         for(int i=0; i<allMarkers.length; ++i){
             JButton marker = markers[i];
-            //System.out.println("## DEBUG ## allMarkers[i].getMarkerType() (i-edik korre): " + allMarkers[i].getMarkerType());
-            //String stringem = allMarkers[i].getMarkerType();
             ImageIcon icon = new ImageIcon(DirectionsGeocoder.class.getResource(allMarkers[i].getMarkerType()));
-            //ImageIcon icon = new ImageIcon(allMarkers[i].getMarkerType());
             marker.setIcon(icon);
             marker.setBackground(off);
             markers[i].setOpaque(true);
@@ -283,7 +294,7 @@ public class Main {
         addMarker.setLayout(new GridLayout(5,1));
         addMarker.setVisible(false);
         
-        JButton createMarker = new JButton("Markertípus felvétele");
+        JButton createMarker = new JButton("új Markertípus felvétele");
         createMarker.setPreferredSize(new Dimension(150, 30));
         createMarker.setBorder(null);
         createMarker.setForeground(Color.WHITE);
@@ -319,6 +330,8 @@ public class Main {
         refreshPois.setBackground(new Color(66,133,244));
         refreshPois.setOpaque(true);
         
+        // building of the Marker management JPanel with the previously defined
+        // marker-related JButtons
         JPanel poiTools = new JPanel();
         poiTools.add(new JLabel("Markerek kezelése: "));
         poiTools.add(allMarkersList);
@@ -327,6 +340,7 @@ public class Main {
         poiTools.add(refreshPois);
         poiTools.setLayout(new GridLayout(poiTools.getComponentCount(),1,1,1));
         
+        // adding all 3 type of tools to the RIGHT sidepanel
         JPanel allTools = new JPanel(new GridLayout(3,1));
         allTools.add(routeTools);
         allTools.add(poiTools);
@@ -347,6 +361,7 @@ public class Main {
             }
         });*/
         
+        // building the FRAME from previously defined components
         JFrame frame = new JFrame();
         frame.setMinimumSize(new Dimension(1200,600));
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);

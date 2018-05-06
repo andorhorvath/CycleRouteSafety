@@ -33,26 +33,33 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 
 /**
- * This example demonstrates how to calculate a route between two locations.
+ * Defines the map manager tools, like from field, to field, control panels,
+ * while also configures them. Initializes map shown.
+ * configures the map to a default location when the program is starting up
  *
- * @author Vitaly Eremenko
+ * @author Andor, used the example by Vitaly Eremenko
  */
 public class DirectionsGeocoder extends MapView implements ControlPanel {
 
     private static final Color FOREGROUND_COLOR = new Color(0xBB, 0xDE, 0xFB);
 
-    private JTextField fromField;
-    private JTextField toField;
-    private String defaultFrom = "Budapest, Pázmány Péter stny. 1a, 1117 Magyarország";
-    private String defaultTo = defaultFrom;
-    private LatLng latLng = new LatLng();
+    // declaring a default center for the map to show while starting up the
+    // program
+    private final JTextField fromField;
+    private final JTextField toField;
+    private final String defaultFrom = "Budapest, Pázmány Péter stny. 1a, 1117 Magyarország";
+    private final String defaultTo = "";//defaultFrom;
+    private final int PREFERRED_HEIGHT = 169;
+    private final double PREFERRED_ZOOM = 15.0; // was 12
 
-    JPanel controlPanel;
+    public final JPanel controlPanel;
 
+    /**
+     * 
+     */
     public DirectionsGeocoder() {
         controlPanel = new JPanel();
 
@@ -61,19 +68,22 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
 
         configureControlPanel();
 
+        System.out.println("## DEBUG ## before setting on map ready..." );
         // Setting of a ready handler to MapView object. onMapReady will be called when map initialization is done and
         // the map object is ready to use. Current implementation of onMapReady customizes the map object.
         setOnMapReadyHandler(new MapReadyHandler() {
             @Override
             public void onMapReady(MapStatus status) {
                 // Check if the map is loaded correctly
+                System.out.println("## DEBUG ## before checking       status == MapStatus.MAP_STATUS_OK" );
                 if (status == MapStatus.MAP_STATUS_OK) {
                     // Getting the associated map object
                     final Map map = getMap();
+                    System.out.println("## DEBUG ## status == MapStatus.MAP_STATUS_OK" );
                     // Setting the map center
                     map.setCenter(new LatLng(41.85, -87.65));
                     // Setting initial zoom value
-                    map.setZoom(12.0);
+                    map.setZoom(PREFERRED_ZOOM);
                     // Creating a map options object
                     MapOptions options = new MapOptions();
                     // Creating a map type control options object
@@ -86,7 +96,7 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
                     map.setOptions(options);
                     
                     //performGeocode(defaultFrom);
-                    //calculateDirection();
+
                     com.teamdev.jxmaps.Marker marker = new com.teamdev.jxmaps.Marker(map);
                     // Setting marker position
                     marker.setPosition(map.getCenter());
@@ -109,8 +119,10 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
                         }
                     });
                 }
+                
             }
         });
+        
     }
     
     public JTextField getFromField(){
@@ -120,15 +132,21 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
     public JTextField getToField(){
         return fromField;
     }
-
+    
     @Override
     public JComponent getControlPanel() {
         return controlPanel;
     }
 
+    /**
+     * Creates, defines the Directions control-panel that will let the user
+     * give start and finish points of a route. It also creates the control-panel
+     * itself with the required buttons, icons, etc.
+     * 
+     */
     @Override
     public void configureControlPanel() {
-//        performGeocode(fromField.getText());
+        performGeocode(fromField.getText());
         
         controlPanel.setBackground(Color.white);
         controlPanel.setLayout(new BorderLayout());
@@ -169,6 +187,8 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
 
         //!!!meg kell figyelni, történt-e változás, különben értelmetlen mindig kiírni ^
         
+        // defining the Directions controller tools and their usage, while also 
+        // defining their layouts
         JLabel fromIcon = new JLabel(new ImageIcon(DirectionsGeocoder.class.getResource("res/from.png")));
         JLabel dotsIcon = new JLabel(new ImageIcon(DirectionsGeocoder.class.getResource("res/dots.png")));
         JLabel toIcon = new JLabel(new ImageIcon(DirectionsGeocoder.class.getResource("res/to.png")));
@@ -204,9 +224,13 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
         controlPanel.add(demoControlPanel, BorderLayout.NORTH);
     }
 
+    /**
+     * Makes preferred height the pre-configured value.
+     * @return
+     */
     @Override
     public int getPreferredHeight() {
-        return 169;
+        return PREFERRED_HEIGHT;
     }
 
     class UnderscoreBorder extends AbstractBorder {
@@ -266,10 +290,25 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
         messageBar.setText(messageBar.getText() + "\n" + text);
     }
     
+    /**
+     * Converts a pair of from address, to address to the following string:
+     * <From: fromAddress> <To: toAddress> with adding the marks.
+     * 
+     * @param textFrom
+     * @param textTo
+     * @return the complete String
+     */
     public String textFromTo(String textFrom, String textTo){
         return "<From: " + textFrom + "> <To: " + textTo + ">";
     }
     
+    /**
+     * Creates a route according to the current state of the UI, saving the 
+     * route to the database. It also sends a status message to the message bar
+     * on the map.
+     * 
+     * @param messageBar
+     */
     public void createRoute(JTextArea messageBar){
         ManageDatabase manageDatabase = new ManageDatabase();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -283,6 +322,14 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
         JOptionPane.showMessageDialog(null, text);
     }
     
+    /**
+     * Creates a marker in the DataBase with it's given description and 
+     * markerType
+     * 
+     * @param messageBar
+     * @param description
+     * @param markerType
+     */
     public void createMarker(JTextArea messageBar, String description, String markerType){
         ManageDatabase manageDatabase = new ManageDatabase();
         manageDatabase.createMarker(description, markerType);
@@ -291,6 +338,13 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
         JOptionPane.showMessageDialog(null, text);
     }
     
+    /**
+     * Modifying an existing (the currently displayed) route with the current
+     * start and end-points
+     * 
+     * @param route
+     * @param messageBar
+     */
     public void modifyRoute(Route route, JTextArea messageBar){
         ManageDatabase manageDatabase = new ManageDatabase();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
