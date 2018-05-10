@@ -235,6 +235,12 @@ public class Main {
             });
         }
         // adding all markers to the list to be displayed
+        
+        int preferredHeight = map.allMarkers.size() / 4 + 1;
+        Dimension preferredSize = new Dimension();
+        preferredSize.setSize(100, preferredHeight);
+        allMarkersList.setPreferredSize(preferredSize);
+        
         for (int n = 0; n < map.allMarkers.size(); ++n) {
             allMarkersList.add(markers[n]);
         }
@@ -244,7 +250,6 @@ public class Main {
         JLabel desc = new JLabel("Leírás");
         JTextField description = new JTextField();
         description.setPreferredSize(new Dimension(50, 15));
-//3        JLabel type = new JLabel("Képfájl helye (pl. res/dots.png)");
         JTextField markerType = new JTextField();
         markerType.setPreferredSize(new Dimension(150, 30));
         markerType.setEditable(false);
@@ -287,13 +292,13 @@ public class Main {
         addMarker.add(desc);
         addMarker.add(description);
         addMarker.add(browseMarkerFile);
-        addMarker.add(markerType);
+        //addMarker.add(markerType);
         addMarker.add(saveMarker);
         addMarker.setLayout(new GridLayout(5, 1));
         addMarker.setVisible(false);
 
         JButton createMarker = new JButton("Markertípus felvétele");
-        createMarker.setPreferredSize(new Dimension(150, 30));
+        createMarker.setPreferredSize(new Dimension(150, 15));  //was 30
         createMarker.setBorder(null);
         createMarker.setForeground(Color.WHITE);
         createMarker.setBackground(new Color(66, 133, 244));
@@ -438,13 +443,21 @@ public class Main {
         poiTools.add(toggleAllPois);
         poiTools.add(showOnlyNear);
         poiTools.setLayout(new GridLayout(poiTools.getComponentCount(), 1, 1, 1));
+        //Dimension poiToolsDimension = new Dimension(5,9);
+        //poiTools.setPreferredSize(poiToolsDimension);
 
         // adding all 3 type of tools to the RIGHT sidepanel    
-        JPanel allTools = new JPanel(new GridLayout(3, 1));
-        allTools.add(routeTools);
+        JPanel allTools = new JPanel(new GridLayout(2, 1));
+        //allTools.add(routeTools);
         allTools.add(poiTools);
         allTools.add(addMarker);
-
+        map.controlPanel.add(routeTools, BorderLayout.SOUTH);
+        /*
+        final DirectionsGeocoder map = new DirectionsGeocoder();
+        frame.add(map, BorderLayout.CENTER);
+        
+        */
+        
         //TODO: don't allow other buttons to be pushed. Redesign needed...
         /*browser.addTitleListener(new TitleListener() {
             @Override
