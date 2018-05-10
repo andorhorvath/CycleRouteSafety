@@ -5,10 +5,10 @@ package cycleroutesafety;
  * the given place "close" to the planned route like hazards, usable free
  * air-pumps, drinkwater fountains, etc.
  * It has a
- * poiID for DB purposes
- * destination to store where it is on the map, with an address
- * markerID to connect to a Marker object that will be represented on the map by
- * this POI object
+ * - poiID for DB purposes
+ * - destination to store where it is on the map, with an address
+ * - markerID to connect to a Marker object that will be represented on the map
+ * by this POI object.
  * 
  * @author Andor Horvath
  */
