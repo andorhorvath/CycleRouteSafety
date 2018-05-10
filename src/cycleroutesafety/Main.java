@@ -10,6 +10,14 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import filechooser.components.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Main {
 
@@ -20,6 +28,7 @@ public class Main {
     public static ArrayList<Route> allRoutes;
     public static Color off = Color.lightGray;
     public static Color on = Color.white;
+    public static File tempStaticMarkerFileStore = null;
 
     public static void main(String[] args) {
 
@@ -45,7 +54,7 @@ public class Main {
         addressPane.add(new JLabel(" Betöltött útvonal: "));
         addressPane.add(addressBar);
 
-        // building the Right panel to manage routes & markers
+        // building the Right panel to manage routes
         JButton createRoute = new JButton("Mentés új útvonalként");
         createRoute.setPreferredSize(new Dimension(150, 30));
         createRoute.setBorder(null);
@@ -234,15 +243,50 @@ public class Main {
         JPanel addMarker = new JPanel();
         JLabel desc = new JLabel("Leírás");
         JTextField description = new JTextField();
-        description.setPreferredSize(new Dimension(150, 30));
-        JLabel type = new JLabel("Képfájl helye (pl. res/dots.png)");
+        description.setPreferredSize(new Dimension(50, 15));
+//3        JLabel type = new JLabel("Képfájl helye (pl. res/dots.png)");
         JTextField markerType = new JTextField();
         markerType.setPreferredSize(new Dimension(150, 30));
+        markerType.setEditable(false);
+        
+        final JFileChooser fileChooser = new JFileChooser();
+        //Add a custom (images only) file filter and disable the default
+        //(Accept All) file filter.
+        fileChooser.addChoosableFileFilter(new ImageFilter());
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        //Add custom icons for file types.
+        fileChooser.setFileView(new ImageFileView());
+        //Add the preview pane.
+        fileChooser.setAccessory(new ImagePreview(fileChooser));
+                
+        JButton browseMarkerFile = new JButton("Képfájl tallózása…");
+        browseMarkerFile.setPreferredSize(new Dimension(100,15));
+        browseMarkerFile.addActionListener((ActionEvent ae) -> {
+            //file chooser is already have been set up
+            //Show it.
+            int returnVal = fileChooser.showDialog(frame, "Képfájl tallózása…");
+            //Process the results.
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                File newMarkerFile = fileChooser.getSelectedFile();
+                messageBar.append("\nCsatolom a fájlt: " 
+                        + newMarkerFile.getName() + ".\n");
+                // addign res/ prefix, because the reader mechanism would not be
+                // able to read them just with more string manipulations...
+                markerType.setText(newMarkerFile.getName());
+                tempStaticMarkerFileStore = newMarkerFile;
+            } else {
+                messageBar.append("\nA filecsatolásnál cancel történt.\n");
+            }
+            messageBar.setCaretPosition(messageBar.getDocument().getLength());
 
+            //Reset the file chooser for the next time it's shown.
+            fileChooser.setSelectedFile(null);
+        });
+        
         JButton saveMarker = new JButton("Mentés");
         addMarker.add(desc);
         addMarker.add(description);
-        addMarker.add(type);
+        addMarker.add(browseMarkerFile);
         addMarker.add(markerType);
         addMarker.add(saveMarker);
         addMarker.setLayout(new GridLayout(5, 1));
@@ -262,7 +306,27 @@ public class Main {
         saveMarker.addActionListener((ActionEvent ae) -> {
             allMarkersList.removeAll();
             addMarker.setVisible(false);
-            map.allMarkers = map.createMarker(messageBar, description.getText(), markerType.getText());
+            // saving the markerType with the res prefix because markerType
+            // gets only the fileName and the goal directory should be constant
+            map.allMarkers = map.createMarker(messageBar, description.getText(), "res/" + markerType.getText());
+            // copy the browsed file to the res directory for later re-use
+            // avoiding false clicks, when no file ia browsed (impossible by 
+            // theory the if is not required, but still...)
+            if ( tempStaticMarkerFileStore != null ) {
+                // copy the file to the res directory
+                // getting workingDir/res dir's PATH to pass it to the copy call 
+                Path resDirPath = Paths.get(System.getProperty("user.dir"), "src", "cycleroutesafety");                
+                Path from = tempStaticMarkerFileStore.toPath();
+                Path to = resDirPath.resolve("res/" + tempStaticMarkerFileStore.toPath().getFileName());
+
+                try {
+                    //copying the tempStored file to the workingDir/res dir
+                    Files.copy(from, to);
+                } catch (IOException ex) {
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            } // else skip, as there is no file browsed yet...
+            
             JButton[] markersArray = new JButton[map.allMarkers.size()];
             for (int n = 0; n < map.allMarkers.size(); ++n) {
                 int mm = n;
