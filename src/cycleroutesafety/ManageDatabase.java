@@ -7,11 +7,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 
-/**
+/*
+ * Represents one connection to the Database. It allows several data management 
+ * tools to be run, like reading from & writing to DB or modifying existing rows
+ * For production use, this would be implemented with user management in place.
  * 
- * 
- * @author Andor
+ * @author Andor Horvath
  */
 public class ManageDatabase {
 
@@ -24,96 +27,93 @@ public class ManageDatabase {
     private final String dbDomain = ("jdbc:mysql://localhost/" + dbName + "?useLegacyDatetimeCode=false&serverTimezone=Europe/Paris");
 
     /**
-     * 
-     * @return the number of routes stored in the DB's ROUTE table
+     * Dummy solution for getting the row number of Routes table. It may be
+     * beneficial to use count(*) just to eliminate the CPU overhead on the
+     * client running the java program. Or implement an approximation query that
+     * is not O(n) on the row number. select * from information_schema.TABLES
+     * where table_name = 'routes'
+     *
+     * @return number of rows in Route table
      */
     public int numberOfRoutes() {
-        int i = 0;
+        int counter = 0;
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
             query = "SELECT * from routes";
             PreparedStatement stm = conn.prepareStatement(query);
             rs = stm.executeQuery();
-            i = -1;
+            counter = -1;
             while (rs.next()) {
-                ++i;
+                ++counter;
             }
             conn.close();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logSQLException(e);
         }
-        return i;
+        return counter;
     }
 
     /**
+     * Dummy solution for getting the row number of Markers table.
      *
-     * @return the number of markers stored in the DB's MARKER table
+     * @return number of rows in Markers table
      */
     public int numberOfMarkers() {
-        int i = 0;
+        int counter = 0;
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
-            query = "SELECT * from markers";
+            query = "SELECT * from routes";
             PreparedStatement stm = conn.prepareStatement(query);
             rs = stm.executeQuery();
-            i = -1;
+            counter = -1;
             while (rs.next()) {
-                ++i;
+                ++counter;
             }
             conn.close();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logSQLException(e);
         }
-        return i;
+        return counter;
     }
 
     /**
+     * Dummy solution for getting the row number of the Pois table.
      *
-     * @return the number of pois stored in the DB's POIS table
+     * @return number of rows in Pois table
      */
     public int numberOfPois() {
-        int i = 0;
+        int counter = 0;
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
             query = "SELECT * from pois";
             PreparedStatement stm = conn.prepareStatement(query);
             rs = stm.executeQuery();
-            i = -1;
+            counter = -1;
             while (rs.next()) {
-                ++i;
+                ++counter;
             }
             conn.close();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logSQLException(e);
         }
-        return i;
+        return counter;
     }
 
     /**
-     * 
-     * @return an array of Route objects, that contains ALL the routes from the 
-     * database.
+     * Reading all the Routes in the DB to the returned arrayList of Routes.
+     *
+     * @return an arrayList of Routes containing all the routes of the DB.
+     *
      */
-    public Route[] readRoutes() {
+    public ArrayList<Route> readRoutes() {
+        ArrayList<Route> allRoutesFromDb = new ArrayList<>();
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
             query = "SELECT * from routes";
             PreparedStatement stm = conn.prepareStatement(query);
             rs = stm.executeQuery();
-            int i = 0;
             while (rs.next()) {
-                ++i;
-            }
-
-            Route[] myRoute = new Route[i];
-
-            query = "SELECT * from routes";
-            stm = conn.prepareStatement(query);
-            rs = stm.executeQuery();
-            i = -1;
-            while (rs.next()) {
-                ++i;
-                myRoute[i] = new Route(
+                allRoutesFromDb.add(new Route(
                         rs.getInt("routeID"),
                         rs.getString("routeName"),
                         rs.getString("author"),
@@ -121,78 +121,88 @@ public class ManageDatabase {
                         rs.getString("finishPoint"),
                         rs.getInt("routeLength"),
                         rs.getString("lastUpdateTime")
-                );
-                //System.out.println(myRoute[i].toString()); 
+                ));
             }
             conn.close();
-            return myRoute;
+            return allRoutesFromDb;
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logSQLException(e);
         }
-        Route[] myRoute = new Route[0];
-        return myRoute;
+        return allRoutesFromDb;
     }
 
     /**
-     * Scans the DB's POI table
-     * - to see how many data we have, counting it's rows
-     * - declare an array of POI objects
-     * @return an array of Poi objects, containing ALL the POIs that are stored
-     * in the database.
+     * Reading all the pois in the DB to the returned arrayList of Pois.
+     *
+     * @return an arrayList of Pois containing all the pois of the DB.
+     *
      */
-    public Poi[] readPois() {
+    public ArrayList<Poi> readPois() {
+        ArrayList<Poi> allPoisFromDb = new ArrayList<>();
         try {
+
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
-            // scans over whole table to see how many data we have (lines)
             query = "SELECT * from pois";
             PreparedStatement stm = conn.prepareStatement(query);
             rs = stm.executeQuery();
-            int i = 0;
             while (rs.next()) {
-                ++i;
-            }
-
-            Poi[] myPoi = new Poi[i];
-
-            query = "SELECT * from pois";
-            stm = conn.prepareStatement(query);
-            rs = stm.executeQuery();
-            i = -1;
-            while (rs.next()) {
-                ++i;
-                myPoi[i] = new Poi(
+                allPoisFromDb.add(new Poi(
                         rs.getInt("poiID"),
-                        rs.getString("destination"),
-                        rs.getInt("markerID"));
-                System.out.println(myPoi[i].toString());
+                        rs.getDouble("lat"),
+                        rs.getDouble("lng"),
+                        rs.getInt("markerID")
+                ));
             }
             conn.close();
-            return myPoi;
+            return allPoisFromDb;
         } catch (SQLException e) {
-            LocalDate today = LocalDate.now();
-            LocalTime now = LocalTime.now();
-            System.out.println(today + " " + now + " FATAL  Database related error. SQLException is: " + e.getMessage());
-// throw FATAL, let it die...
+            logSQLException(e);
         }
-        Poi[] myPoi = new Poi[0];
-        return myPoi;
+        return allPoisFromDb;
     }
 
     /**
-     * Reads the particular route from the DataBase that's ID is given as 
-     * parameter.
-     * 
-     * @param routeID
-     * @return Route object, filled with data from the DB's corresponding row
-     * from the ROUTES table.
+     * Reading all the markers in the DB to the returned arrayList of Markers.
+     *
+     * @return an arrayList of Markers containing all the markers of the DB.
+     *
      */
-    public Route readRoute(int routeID) {
+    public ArrayList<Marker> readMarkers() {
+        ArrayList<Marker> allMarkersFromDb = new ArrayList<>();
+        try {
+            conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
+            query = "SELECT * from markers";
+            PreparedStatement stm = conn.prepareStatement(query);
+            rs = stm.executeQuery();
+            while (rs.next()) {
+                allMarkersFromDb.add(new Marker(
+                        rs.getInt("markerID"),
+                        rs.getString("description"),
+                        rs.getString("markerType")
+                ));
+            }
+            conn.close();
+            return allMarkersFromDb;
+        } catch (SQLException e) {
+            logSQLException(e);
+        }
+        return allMarkersFromDb;
+    }
+
+    /**
+     * Reads one Route from the DB, if the given routeID is exists in the DB.
+     * Otherwise it returns a new, empty Route object that is just constructed.
+     *
+     * @param routeID
+     * @return the route from the DB that has the given ID
+     */
+    public Route readOneRouteById(int routeID) {
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
             query = "SELECT * from routes WHERE routeID = " + routeID;
             PreparedStatement stm = conn.prepareStatement(query);
             rs = stm.executeQuery();
-            Route myRoute = new Route(
+            Route readRoute = new Route(
                     rs.getInt("routeID"),
                     rs.getString("routeName"),
                     rs.getString("author"),
@@ -201,61 +211,43 @@ public class ManageDatabase {
                     rs.getInt("routeLength"),
                     rs.getString("lastUpdateTime")
             );
-            System.out.println(myRoute.toString());
+            System.out.println(readRoute.toString());
             conn.close();
-            return myRoute;
+            return readRoute;
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logSQLException(e);
         }
-        Route myRoute = new Route();
-        return myRoute;
+        Route emptyRoute = new Route();
+        return emptyRoute;
     }
 
     /**
-     * Scans the DB's MARKERS table
-     * - to see how many data we have, counting it's rows
-     * - declare an array of Marker objects
-     * @return an array of Marker objects, containing ALL the Markers that are 
-     * stored in the database.
+     * Reads the markerType string from the given markerID's Marker from the DB.
+     * If SQLexception is happening, it returns an empty string.
+     *
+     * @param markerID
+     * @return markerType String of the given marker
      */
-    public Marker[] readMarkers() {
+    public String readOneMarkerTypeById(int markerID) {
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
-            query = "SELECT * from markers";
+            query = "SELECT * from markers WHERE markerID = " + markerID;
             PreparedStatement stm = conn.prepareStatement(query);
             rs = stm.executeQuery();
-            int i = 0;
-            while (rs.next()) {
-                ++i;
-            }
-
-            Marker[] myMarker = new Marker[i];
-
-            query = "SELECT * from markers";
-            stm = conn.prepareStatement(query);
-            rs = stm.executeQuery();
-            i = -1;
-            while (rs.next()) {
-                ++i;
-                myMarker[i] = new Marker(
-                        rs.getInt("markerID"),
-                        rs.getString("description"),
-                        rs.getString("markerType"));
-                System.out.println(myMarker[i].toString());
-            }
+            String readMarker = rs.getString("markerType");
             conn.close();
-            return myMarker;
+            return readMarker;
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logSQLException(e);
         }
-        Marker[] myMarker = new Marker[0];
+        String myMarker = "";
         return myMarker;
     }
 
     /**
      * Creates a new Route object according to the parameters, then persists it
      * to the DB with a new ID.
-     * 
+     *
      * @param routeName
      * @param author
      * @param startPoint
@@ -286,7 +278,6 @@ public class ManageDatabase {
                     + "'" + finishPoint + "', "
                     + "'" + routeLength + "', "
                     + "'" + lastUpdateTime + "')";
-            System.out.println(query);
             PreparedStatement stm = conn.prepareStatement(query);
             stm.executeUpdate();
             query = "select last_insert_id() as last_id from routes";
@@ -295,14 +286,14 @@ public class ManageDatabase {
             System.out.println(rs.getString("last_id"));
             conn.close();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logSQLException(e);
         }
     }
 
     /**
      * Creates a new Marker object according to the parameters, then persists it
      * to the DB with a new ID.
-     * 
+     *
      * @param description
      * @param markerType
      */
@@ -319,12 +310,41 @@ public class ManageDatabase {
             stm.executeUpdate();
             conn.close();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logSQLException(e);
         }
     }
 
     /**
-     * Modify an existing route's DB entry with the values in it's parameters.
+     * Inserts all the POIs (with the newly created ones at the map) to the DB.
+     * The input arrayList should contain all the POIs that is present (not just
+     * showed) in the map.
+     * 
+     * @param newPois
+     */
+    public void refreshPois(ArrayList<Poi> newPois) {
+        try {
+            conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
+            query = "TRUNCATE pois";
+            PreparedStatement stm = conn.prepareStatement(query);
+            stm.executeUpdate();
+            for (int n = 0; n < newPois.size(); ++n) {
+                query = "INSERT INTO pois(lat, "
+                        + "lng, "
+                        + "markerID) "
+                        + "VALUES('" + newPois.get(n).getLat() + "', "
+                        + "'" + newPois.get(n).getLng() + "', "
+                        + "'" + newPois.get(n).getMarkerID() + "')";
+                stm = conn.prepareStatement(query);
+                stm.executeUpdate();
+            }
+            conn.close();
+        } catch (SQLException e) {
+            logSQLException(e);
+        }
+    }
+
+    /**
+     * Modify an existing Route's DB entry with the values in it's parameters.
      * 
      * @param routeID
      * @param routeName
@@ -356,39 +376,41 @@ public class ManageDatabase {
             PreparedStatement stm = conn.prepareStatement(query);
             System.out.println(query);
             if (stm.executeUpdate() != 1) {
-                System.out.println("Már van ilyen érték az adatbázisban!!!");
+                System.out.println("Már van ilyen érték az adatbázisban, így"
+                        + " nem tudom menteni az adatbázisba.\nKérem készítsen"
+                        + " másik útvonalat, ami különböző.");
             }
             conn.close();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logSQLException(e);
         }
     }
 
     /**
-     * Modify an existing poi's DB entry with the values in it's parameters.
+     * Modify an existing Poi's DB entry with the values in it's parameters.
      * 
      * @param poiID
-     * @param destination
+     * @param lat
+     * @param lng
      * @param markerID
      */
     public void modifyPoi(int poiID,
-            String destination,
+            double lat,
+            double lng,
             int markerID) {
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
             query = "UPDATE pois SET "
                     + "routeID='" + poiID + "', "
-                    + "destination='" + destination + "', "
-                    + "poiType='" + markerID + "', "
+                    + "lat='" + lat + "', "
+                    + "lat='" + lng + "', "
+                    + "markerID='" + markerID + "', "
                     + "WHERE poiID=" + poiID + "";
             PreparedStatement stm = conn.prepareStatement(query);
             stm.executeUpdate();
             conn.close();
-
         } catch (SQLException e) {
-
-            System.out.println(e.getMessage());
-
+            logSQLException(e);
         }
     }
 
@@ -407,7 +429,7 @@ public class ManageDatabase {
             stm.executeUpdate();
             conn.close();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logSQLException(e);
         }
     }
 
@@ -426,7 +448,21 @@ public class ManageDatabase {
             stm.executeUpdate();
             conn.close();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            logSQLException(e);
         }
+    }
+
+    /**
+     * prints an error message to standard out for debugging purposes. The goal
+     * of the function is to give a little more context than the usually thrown
+     * sqlException message.
+     *
+     * @param exceptionCatched
+     */
+    protected void logSQLException(SQLException exceptionCatched) {
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+        System.out.println(today + " " + now + " FATAL  Database related error. SQLException is: " + exceptionCatched.getMessage());
+        // throw FATAL, let it die...
     }
 }

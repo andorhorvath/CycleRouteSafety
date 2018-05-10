@@ -23,6 +23,7 @@ import com.teamdev.jxmaps.MapStatus;
 import com.teamdev.jxmaps.MapTypeControlOptions;
 import com.teamdev.jxmaps.TravelMode;
 import com.teamdev.jxmaps.swing.MapView;
+import com.teamdev.jxmaps.Icon;
 
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
@@ -31,128 +32,274 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 /**
  * Defines the map manager tools, like from field, to field, control panels,
- * while also configures them. Initializes map shown.
- * configures the map to a default location when the program is starting up
+ * while also configures them. Initializes map shown. configures the map to a
+ * default location when the program is starting up
  *
- * @author Andor, used the example by Vitaly Eremenko
+ * @author Vitaly Eremenko, modified by Andor Horvath for CycleRouteSafety
  */
-public class DirectionsGeocoder extends MapView implements ControlPanel {
+public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
     private static final Color FOREGROUND_COLOR = new Color(0xBB, 0xDE, 0xFB);
-
-    // declaring a default center for the map to show while starting up the
-    // program
+    // declaring a default center for the map to show while starting up
     private final JTextField fromField;
     private final JTextField toField;
-    private final String defaultFrom = "Budapest, Pázmány Péter stny. 1a, 1117 Magyarország";
-    private final String defaultTo = "";//defaultFrom;
-    private final int PREFERRED_HEIGHT = 169;
-    private final double PREFERRED_ZOOM = 15.0; // was 12
+    private final String defaultFrom;
+    private final String defaultTo;
+    public int actualMarkerType = -1;
+    public ArrayList<Poi> allPois = new ArrayList<>();
+    public ArrayList<Poi> defaultPois = new ArrayList<>();
+    public ArrayList<Poi> nearPois = new ArrayList<>();
+    public ArrayList<com.teamdev.jxmaps.Marker> onMapPois = new ArrayList<>();
 
-    public final JPanel controlPanel;
+    public ArrayList<Marker> allMarkers;
+
+    JPanel controlPanel;
 
     /**
-     * 
+     * The constructor creates the map object, while also creating and
+     * configuring the GUI to manage the map and it's services.
      */
     public DirectionsGeocoder() {
+        defaultFrom = "Budapest, Pázmány Péter stny. 1a, 1117 Magyarország";
+        defaultTo = defaultFrom;
+
         controlPanel = new JPanel();
 
         fromField = new JTextField(defaultFrom);
         toField = new JTextField(defaultTo);
+        onMapPois = new ArrayList<>();
 
         configureControlPanel();
 
-        System.out.println("## DEBUG ## before setting on map ready..." );
-        // Setting of a ready handler to MapView object. onMapReady will be called when map initialization is done and
-        // the map object is ready to use. Current implementation of onMapReady customizes the map object.
         setOnMapReadyHandler(new MapReadyHandler() {
             @Override
             public void onMapReady(MapStatus status) {
-                // Check if the map is loaded correctly
-                System.out.println("## DEBUG ## before checking       status == MapStatus.MAP_STATUS_OK" );
-                if (status == MapStatus.MAP_STATUS_OK) {
-                    // Getting the associated map object
-                    final Map map = getMap();
-                    System.out.println("## DEBUG ## status == MapStatus.MAP_STATUS_OK" );
-                    // Setting the map center
-                    map.setCenter(new LatLng(41.85, -87.65));
-                    // Setting initial zoom value
-                    map.setZoom(PREFERRED_ZOOM);
-                    // Creating a map options object
-                    MapOptions options = new MapOptions();
-                    // Creating a map type control options object
-                    MapTypeControlOptions controlOptions = new MapTypeControlOptions();
-                    // Changing position of the map type control
-                    controlOptions.setPosition(ControlPosition.TOP_RIGHT);
-                    // Setting map type control options
-                    options.setMapTypeControlOptions(controlOptions);
-                    // Setting map options
-                    map.setOptions(options);
-                    
-                    //performGeocode(defaultFrom);
 
-                    com.teamdev.jxmaps.Marker marker = new com.teamdev.jxmaps.Marker(map);
-                    // Setting marker position
-                    marker.setPosition(map.getCenter());
-                    map.addEventListener("click", new MapMouseEvent() {
-                        @Override
-                        public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
-                            // Creating a new marker
+                final Map map = getMap();
+                // Setting the map center
+                //map.setCenter(new LatLng(41.85, -87.65));
+                // Setting initial zoom value
+                //map.setZoom(10.0);
+                // Creating a map options object
+                MapOptions options = new MapOptions();
+                // Creating a map type control options object
+                MapTypeControlOptions controlOptions = new MapTypeControlOptions();
+                // Changing position of the map type control
+                controlOptions.setPosition(ControlPosition.TOP_RIGHT);
+                // Setting map type control options
+                options.setMapTypeControlOptions(controlOptions);
+                // Setting map options
+                map.setOptions(options);
+
+                // performing a Geocode for the default address to make the 
+                // map be centered on ELTE IK when starting up
+                performGeocode(defaultFrom);
+
+                allPois = readPoisFromDb();
+                defaultPois = readPoisFromDb();
+                addAllPois(allPois, map);
+
+                map.addEventListener("click", new MapMouseEvent() {
+                    @Override
+                    public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
+                        // Creating a new marker
+                        if (actualMarkerType != -1) {
                             final com.teamdev.jxmaps.Marker marker = new com.teamdev.jxmaps.Marker(map);
-                            // Move marker to the position where user clicked
-                            marker.setPosition(mouseEvent.latLng());
-
-                            // Adding event listener that intercepts clicking on marker
-                            marker.addEventListener("click", new MapMouseEvent() {
-                                @Override
-                                public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
-                                    // Removing marker from the map
-                                    marker.remove();
-                                }
-                            });
+                            Poi newPoi = new Poi(allPois.get(allPois.size() - 1).getPoiID() + 1, mouseEvent.latLng().getLat(), mouseEvent.latLng().getLng(), actualMarkerType);
+                            allPois.add(newPoi);
+                            addPoi(newPoi, marker);
                         }
-                    });
-                }
-                
+                    }
+                });
             }
         });
-        
     }
-    
-    public JTextField getFromField(){
+
+    /**
+     * Creates a POI while also making it visible on the map object with a
+     * JxMaps-Marker. Also binding the onClick action's event listener.
+     *
+     * @param poi
+     * @param jxMapsMarker
+     */
+    public void addPoi(Poi poi, com.teamdev.jxmaps.Marker jxMapsMarker) {
+        //setting the Marker's type & 
+        String actualMarkerPicture = typeOfMarker(poi.getMarkerID());
+        Icon icon = new Icon();
+        icon.loadFromStream(DirectionsGeocoder.class.getResourceAsStream(actualMarkerPicture), "png");
+        jxMapsMarker.setIcon(icon);
+        jxMapsMarker.setPosition(new LatLng(poi.getLat(), poi.getLng()));
+
+        jxMapsMarker.addEventListener("click", new MapMouseEvent() {
+            @Override
+            public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
+                // Removing marker from the map
+                ArrayList<Poi> stayPois = new ArrayList<>();
+                for (int n = 0; n < allPois.size(); ++n) {
+// TODO: possible optimization
+                    if (!(allPois.get(n).getLat() == jxMapsMarker.getPosition().getLat()
+                            && allPois.get(n).getLng() == jxMapsMarker.getPosition().getLng())) {
+                        stayPois.add(allPois.get(n));
+                    }
+                }
+                allPois = stayPois;
+                jxMapsMarker.remove();
+            }
+        });
+        onMapPois.add(jxMapsMarker);
+    }
+
+    /**
+     * Adding all poi objects of input parameter pois to map.
+     *
+     * @param pois
+     * @param map
+     */
+    public void addAllPois(ArrayList<Poi> pois, Map map) {
+        // not using Java 8 functional operators, as their performance impact
+        // may be higher. See references:
+        // 3-reasons-why-you-shouldnt-replace-your-for-loops-by-stream-foreach
+        for (Poi loopingPoi : pois) {
+            final com.teamdev.jxmaps.Marker marker = new com.teamdev.jxmaps.Marker(map);
+            addPoi(loopingPoi, marker);
+        }
+    }
+
+    /**
+     * Looping through map's pois and setting their visibility to false, hiding
+     * them on the map.
+     */
+    public void hideAllPois() {
+        for (int n = 0; n < onMapPois.size(); ++n) {
+            onMapPois.get(n).setVisible(false);
+        }
+    }
+
+    /**
+     * Looping through map's pois and setting their visibility to true, making
+     * them be displayed on the map.
+     */
+    public void showAllPois() {
+        for (int n = 0; n < onMapPois.size(); ++n) {
+            onMapPois.get(n).setVisible(true);
+        }
+    }
+
+    /**
+     * Looping through the map's pois and making visible only the "close" ones.
+     * Basically taking a LatLong "center" point and showing every poi that is
+     * inside the given radius.
+     *
+     * @param a
+     * @param b
+     * @param radius
+     */
+    public void showSpecificPois(LatLng a, LatLng b, double radius) {
+        double minLat = Math.min(a.getLat(), b.getLat());
+        double minLng = Math.min(a.getLng(), b.getLng());
+        double maxLat = Math.max(a.getLat(), b.getLat());
+        double maxLng = Math.max(a.getLng(), b.getLng());
+//TODO: possible optimization, use streams? https://zeroturnaround.com/rebellabs/java-8-explained-applying-lambdas-to-java-collections/
+        for (int n = 0; n < onMapPois.size(); ++n) {
+            if (onMapPois.get(n).getPosition().getLat() >= minLat - radius
+                    && onMapPois.get(n).getPosition().getLng() >= minLng - radius
+                    && onMapPois.get(n).getPosition().getLng() <= maxLat + radius
+                    && onMapPois.get(n).getPosition().getLng() <= maxLng + radius) {
+                onMapPois.get(n).setVisible(true);
+            } else {
+                onMapPois.get(n).setVisible(false);
+            }
+        }
+    }
+
+    /**
+     * When exiting from the program with newly planted POIs, this is called to 
+     * decide whether the question window should be popped, asking for saving
+     * them to the DB.
+     * 
+     * Returns true/false if the size of the two input ArrayList of Poi's size
+     * is different, or if it's the same, then it checks if any of their Poi's
+     * place is modified. If so, returns true. Otherwise returns false.
+     * 
+     * @param poiArrayOne
+     * @param poiArrayTwo
+     * @return
+     */
+    public boolean arePoisNeedDbPersist(ArrayList<Poi> poiArrayOne, ArrayList<Poi> poiArrayTwo) {
+        boolean isPersistNeeded = false;
+        if (poiArrayOne.size() != poiArrayTwo.size()) {
+            isPersistNeeded = true;
+        } else {
+            for (int n = 0; n < poiArrayOne.size() && !isPersistNeeded; ++n) {
+                if (poiArrayOne.get(n).getLat() != poiArrayTwo.get(n).getLat()) {
+                    isPersistNeeded = true;
+                }
+                if (poiArrayOne.get(n).getLng() != poiArrayTwo.get(n).getLng()) {
+                    isPersistNeeded = true;
+                }
+                if (poiArrayOne.get(n).getMarkerID() != poiArrayTwo.get(n).getMarkerID()) {
+                    isPersistNeeded = true;
+                }
+            }
+        }
+        return isPersistNeeded;
+    }
+
+    /**
+     * Returns the given Marker's type value according to the Marker's ID
+     * 
+     * @param markerID
+     * @return markerType value of particular Marker object
+     */
+    public String typeOfMarker(int markerID) {
+        String typeText = "";
+        Boolean isFoundAlready = false;
+//TODO: possible optimization of loop
+//2        for (int n = 0; n < allMarkers.length && !isFoundAlready; ++n) {
+//2            if (markerID == allMarkers[n].getMarkerID()) {
+        for (int n = 0; n < allMarkers.size() && !isFoundAlready; ++n) {
+            if (markerID == allMarkers.get(n).getMarkerID())
+                typeText = allMarkers.get(n).getMarkerType();
+        }
+        return typeText;
+    }
+
+    public JTextField getFromField() {
         return fromField;
     }
-    
-    public JTextField getToField(){
+
+    public JTextField getToField() {
         return fromField;
     }
-    
+
     @Override
     public JComponent getControlPanel() {
         return controlPanel;
     }
 
     /**
-     * Creates, defines the Directions control-panel that will let the user
-     * give start and finish points of a route. It also creates the control-panel
-     * itself with the required buttons, icons, etc.
+     * Setting up the Navigational panel that let the user run new from-to
+     * routes, as it is done in googlemaps API. This configures both the view 
+     * and controller parts of the panel.
+     * 
      * 
      */
     @Override
     public void configureControlPanel() {
-        performGeocode(fromField.getText());
-        
+        // setting the view properties like color, size, etc.
         controlPanel.setBackground(Color.white);
         controlPanel.setLayout(new BorderLayout());
 
-        JPanel demoControlPanel = new JPanel(new GridBagLayout());
-        demoControlPanel.setBackground(new Color(61, 130, 248));
+        JPanel navigationControlPanel = new JPanel(new GridBagLayout());
+        navigationControlPanel.setBackground(new Color(61, 130, 248));
 
         Font robotoPlain13 = new Font("Roboto", 0, 13);
         fromField.setForeground(FOREGROUND_COLOR);
@@ -167,28 +314,19 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
         fromField.setBorder(new UnderscoreBorder());
         toField.setBorder(new UnderscoreBorder());
 
-        fromField.addActionListener(new ActionListener(){
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                calculateDirection();
-                performGeocode(fromField.getText());
-                updateFromFieldText(fromField.getText());
-            }
+        // adding ActionListener that would perform the Directions calculation
+        // when hitting enter or search icon on the two fields
+        fromField.addActionListener((ActionEvent ae) -> {
+            calculateDirection();
+            updateFromFieldText(fromField.getText());
         });
-        
-        toField.addActionListener(new ActionListener(){
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                calculateDirection();
-                performGeocode(toField.getText());
-                updateToFieldText(toField.getText());
-            }
+        toField.addActionListener((ActionEvent ae) -> {
+            calculateDirection();
+            updateToFieldText(toField.getText());
         });
 
-        //!!!meg kell figyelni, történt-e változás, különben értelmetlen mindig kiírni ^
-        
-        // defining the Directions controller tools and their usage, while also 
-        // defining their layouts
+        // setting the "usual googlemaps order" of the icons accompanying the
+        // navigational pane
         JLabel fromIcon = new JLabel(new ImageIcon(DirectionsGeocoder.class.getResource("res/from.png")));
         JLabel dotsIcon = new JLabel(new ImageIcon(DirectionsGeocoder.class.getResource("res/dots.png")));
         JLabel toIcon = new JLabel(new ImageIcon(DirectionsGeocoder.class.getResource("res/to.png")));
@@ -206,37 +344,43 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
             }
         });
 
-        demoControlPanel.add(fromIcon, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
+        // building up the contents of the panel with the previous "items"
+        navigationControlPanel.add(fromIcon, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0,
                 GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(22, 30, 0, 0), 0, 0));
-        demoControlPanel.add(dotsIcon, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0,
+        navigationControlPanel.add(dotsIcon, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0,
                 GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(2, 33, 0, 0), 0, 0));
-        demoControlPanel.add(toIcon, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0,
+        navigationControlPanel.add(toIcon, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0,
                 GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(6, 30, 25, 0), 0, 0));
 
-        demoControlPanel.add(fromField, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0,
+        navigationControlPanel.add(fromField, new GridBagConstraints(1, 0, 1, 1, 1.0, 0.0,
                 GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(19, 22, 0, 0), 0, 0));
-        demoControlPanel.add(toField, new GridBagConstraints(1, 2, 1, 1, 1.0, 0.0,
+        navigationControlPanel.add(toField, new GridBagConstraints(1, 2, 1, 1, 1.0, 0.0,
                 GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, new Insets(3, 22, 0, 0), 0, 0));
 
-        demoControlPanel.add(changeIcon, new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0,
+        navigationControlPanel.add(changeIcon, new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0,
                 GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, new Insets(0, 22, 0, 22), 0, 0));
 
-        controlPanel.add(demoControlPanel, BorderLayout.NORTH);
+        this.controlPanel.add(navigationControlPanel, BorderLayout.NORTH);
     }
 
     /**
-     * Makes preferred height the pre-configured value.
-     * @return
+     * Returns a pre-defined value, 169 for the PreferredHeight.
+     * @return 169
      */
     @Override
     public int getPreferredHeight() {
-        return PREFERRED_HEIGHT;
+        return 169;
     }
 
+    /**
+     * UnderscoreBorder is used for the "lines" under the text written to the
+     * navigational panel, under each address input field.
+     */
     class UnderscoreBorder extends AbstractBorder {
+
         @Override
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            g.setColor(FOREGROUND_COLOR);
+            g.setColor(FOREGROUND_COLOR);//
             g.drawLine(0, height - 1, width, height - 1);
         }
 
@@ -252,6 +396,13 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
         }
     }
 
+    /**
+     * With the two input fields of the navigational panel filled, this call
+     * will manage getting the data from these fields, file a request to the 
+     * googlemaps API, receiving the answer then rendering it in the map object
+     * while also moving and zooming the map as required according to the from
+     * and to addresses.
+     */
     public void calculateDirection() {
         // Getting the associated map object
         final Map map = getMap();
@@ -270,38 +421,48 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
                 // Checking of the operation status
                 if (status == DirectionsStatus.OK) {
                     // Drawing the calculated route on the map
-                    if(fromField.getText().equals(toField.getText())){
+                    if (fromField.getText().equals(toField.getText())) {
                         map.getDirectionsRenderer().setDirections(result);
-                        performGeocode(fromField.getText());
-                    }
-                    else{
+                    } else {
                         map.getDirectionsRenderer().setDirections(result);
                     }
                 } else {
-                    //!!! azért jelezni valahogy, ha nem sikerül a térképen útvonalat tervezni!
-                    JOptionPane.showMessageDialog(DirectionsGeocoder.this, "Hiba az útvonalban\nkérem helyes adatokat adjon meg!");
-                    performGeocode(defaultFrom);
+                    JOptionPane.showMessageDialog(DirectionsGeocoder.this,
+                        "Hiba lépett fel az útvonaltervezéskor. Kérem ellenőrizze, hogy\n"
+                        + "- van-e működő internetkapcsolat,\n"
+                        + "- a googlemaps szolgáltatás elérhető-e\n"
+                        + "- a telepítési előfeltételek teljesülnek-e\n"
+                        + "A program futása tovább folytatódik.");
                 }
             }
         });
     }
-    
-    public static void addText(JTextArea messageBar, String text){
+
+    /**
+     * This will append the input parameter text to the input parameter message
+     * bar.
+     * Basically it is used for "alerting" the user about that what happens in
+     * the program actually according to it's use.
+     * 
+     * @param messageBar
+     * @param text
+     */
+    public static void addText(JTextArea messageBar, String text) {
         messageBar.setText(messageBar.getText() + "\n" + text);
     }
-    
+
     /**
      * Converts a pair of from address, to address to the following string:
      * <From: fromAddress> <To: toAddress> with adding the marks.
      * 
      * @param textFrom
      * @param textTo
-     * @return the complete String
+     * @return the complete String as per description
      */
-    public String textFromTo(String textFrom, String textTo){
+    public String textFromTo(String textFrom, String textTo) {
         return "<From: " + textFrom + "> <To: " + textTo + ">";
     }
-    
+
     /**
      * Creates a route according to the current state of the UI, saving the 
      * route to the database. It also sends a status message to the message bar
@@ -309,57 +470,69 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
      * 
      * @param messageBar
      */
-    public void createRoute(JTextArea messageBar){
+    public void createRoute(JTextArea messageBar) {
         ManageDatabase manageDatabase = new ManageDatabase();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date date = new Date();
         String textFrom = fromField.getText();
         String textTo = toField.getText();
-        manageDatabase.createRoute(textFromTo(textFrom,textTo), 
-                "ahorvath", textFrom, textTo , 1, dateFormat.format(date), true);
+        manageDatabase.createRoute(textFromTo(textFrom, textTo),
+                "ahorvath", textFrom, textTo, 1, dateFormat.format(date), true);
         String text = "Sikeres mentés: " + "[From:] " + textFrom + " [To:] " + textTo;
         addText(messageBar, text);
         JOptionPane.showMessageDialog(null, text);
     }
-    
+
     /**
-     * Creates a marker in the DataBase with it's given description and 
-     * markerType
+     * Creates a Marker with it's type and description fields specified by the
+     * input parameters. It will also take message bar for input, where it will
+     * be able to write some status messages about it's work.
      * 
      * @param messageBar
      * @param description
      * @param markerType
+     * @return
      */
-    public void createMarker(JTextArea messageBar, String description, String markerType){
+    public ArrayList<Marker> createMarker(JTextArea messageBar, String description, String markerType) {
         ManageDatabase manageDatabase = new ManageDatabase();
         manageDatabase.createMarker(description, markerType);
         String text = "Sikeres mentés: " + markerType;
         addText(messageBar, text);
         JOptionPane.showMessageDialog(null, text);
+        return manageDatabase.readMarkers();
     }
-    
+
     /**
-     * Modifying an existing (the currently displayed) route with the current
-     * start and end-points
+     * Modify an existing, opened route that is currently displayed on the map.
+     * Saving the new from and to fields.
+     * It also displays it's status messages for the given messageBar.
      * 
      * @param route
      * @param messageBar
      */
-    public void modifyRoute(Route route, JTextArea messageBar){
+    public void modifyRoute(Route route, JTextArea messageBar) {
         ManageDatabase manageDatabase = new ManageDatabase();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date date = new Date();
         String textFrom = fromField.getText();
         String textTo = toField.getText();
-        manageDatabase.modifyRoute(route.getRouteID(),textFromTo(textFrom,textTo), 
+        manageDatabase.modifyRoute(route.getRouteID(), textFromTo(textFrom, textTo),
                 "ahorvath", textFrom, textTo, 1, dateFormat.format(date), true);
         String text = "Sikeres mentés:\n"
                 + "Erről:\n" + route.getRouteName() + "\nErre:\n[From:] " + textFrom + " [To:] " + textTo;
         addText(messageBar, text);
         JOptionPane.showMessageDialog(null, text);
     }
-    
-    public void openRoute(Route route, JTextArea messageBar){
+
+    /**
+     * Opens a route to display it on the currently shown map.
+     * It will also display it's status messages on the message bar it got as
+     * input parameter.
+     * 
+     * @param route
+     * @param messageBar
+     */
+    public void openRoute(Route route, JTextArea messageBar) {
         fromField.setText(route.getStartPoint());
         toField.setText(route.getFinishPoint());
         calculateDirection();
@@ -367,15 +540,34 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
         addText(messageBar, text);
         JOptionPane.showMessageDialog(null, text);
     }
-    
-    public void deleteRoute(Route route, JTextArea messageBar){
+
+    /**
+     * Deletes the currently shown route from the map and also from the DB.
+     * Calling this function will erase everything about the currently open
+     * route, making it impossible to recover it's data.
+     * 
+     * @param route
+     * @param messageBar
+     */
+    public void deleteRoute(Route route, JTextArea messageBar) {
         ManageDatabase manageDatabase = new ManageDatabase();
         manageDatabase.deleteRoute(route.getRouteID());
         String text = "Sikeres törlés:\n"
-                + textFromTo(route.getStartPoint(),route.getFinishPoint())
+                + textFromTo(route.getStartPoint(), route.getFinishPoint())
                 + "\n(ID " + route.getRouteID() + ")";
-        addText(messageBar,text);
+        addText(messageBar, text);
         JOptionPane.showMessageDialog(null, text);
+    }
+
+    /**
+     * Reads the all the pois from the database, and puts them to the returned
+     * arrayList object of Poi objects.
+     * 
+     * @return array list of Pois stored in the database
+     */
+    public ArrayList<Poi> readPoisFromDb() {
+        ManageDatabase manageDatabase = new ManageDatabase();
+        return manageDatabase.readPois();
     }
 
     static void loadAndRegisterCustomFonts() {
@@ -386,11 +578,11 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
             ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, DirectionsGeocoder.class.getResourceAsStream("res/Roboto-Regular.ttf")));
             ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, DirectionsGeocoder.class.getResourceAsStream("res/Roboto-Thin.ttf")));
             ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, DirectionsGeocoder.class.getResourceAsStream("res/Roboto-Light.ttf")));
-        } catch (Exception e) {
+        } catch (FontFormatException | IOException e) {
             throw new RuntimeException(e);
         }
     }
-    
+
     private void performGeocode(String text) {
         // Getting the associated map object
         final Map map = getMap();
@@ -409,12 +601,9 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
                     GeocoderResult result = results[0];
                     // Getting a location of the result
                     LatLng location = result.getGeometry().getLocation();
+                    map.setZoom(12.0);
                     // Setting the map center to result location
-                    //map.setCenter(location);
-                    // Creating a marker object
-                    //Marker marker = new Marker(map);
-                    // Setting position of the marker to the result location
-                    //marker.setPosition(location);
+                    map.setCenter(location);
                     // Creating an information window
                     InfoWindow infoWindow = new InfoWindow(map);
                     // Putting the address and location to the content of the information window
@@ -427,8 +616,16 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
             }
         });
     }
-    
-    public void updateFromFieldText(String text){
+
+    /**
+     * Updates the navigation panel's from address while also geocoding it, and
+     * returning the results of the route planning to this new address.
+     * The new address that will be geocoded is taken from the inputfield as a 
+     * string.
+     * 
+     * @param text
+     */
+    public void updateFromFieldText(String text) {
         // Getting the associated map object
         final Map map = getMap();
         // Creating a geocode request
@@ -442,14 +639,22 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
             public void onComplete(GeocoderResult[] results, GeocoderStatus status) {
                 // Checking operation status
                 if ((status == GeocoderStatus.OK) && (results.length > 0)) {
-                   GeocoderResult result = results[0];
-                   fromField.setText(result.getFormattedAddress());
+                    GeocoderResult result = results[0];
+                    fromField.setText(result.getFormattedAddress());
                 }
             }
         });
     }
-    
-    public void updateToFieldText(String text){
+
+    /**
+     * Updates the navigation panel's to address while also geocoding it, and
+     * returning the results of the route planning to this new address.
+     * The new address that will be geocoded is taken from the inputfield as a 
+     * string.
+     * 
+     * @param text
+     */
+    public void updateToFieldText(String text) {
         // Getting the associated map object
         final Map map = getMap();
         // Creating a geocode request
@@ -463,8 +668,8 @@ public class DirectionsGeocoder extends MapView implements ControlPanel {
             public void onComplete(GeocoderResult[] results, GeocoderStatus status) {
                 // Checking operation status
                 if ((status == GeocoderStatus.OK) && (results.length > 0)) {
-                   GeocoderResult result = results[0];
-                   toField.setText(result.getFormattedAddress());
+                    GeocoderResult result = results[0];
+                    toField.setText(result.getFormattedAddress());
                 }
             }
         });

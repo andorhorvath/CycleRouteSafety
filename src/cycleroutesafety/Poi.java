@@ -10,12 +10,13 @@ package cycleroutesafety;
  * markerID to connect to a Marker object that will be represented on the map by
  * this POI object
  * 
- * @author Andor
+ * @author Andor Horvath
  */
 public class Poi {
 
     private int poiID;
-    private String destination;
+    private double lat;
+    private double lng;
     private int markerID;
 
     public Poi() {
@@ -23,20 +24,26 @@ public class Poi {
     }
 
     public Poi(int poiID,
-            String destination,
+            double lat,
+            double lng,
             int markerID) {
         this.poiID = poiID;
-        this.destination = destination;
+        this.lat = lat;
+        this.lng = lng;
         this.markerID = markerID;
     }
 
     @Override
     public String toString() {
-        return "[" + this.poiID + "; " + this.destination + "; " + this.markerID + "]";
+        return "[" + this.poiID + "; " + this.lat + "; " + this.lng + "; " + this.markerID + "]";
     }
 
-    public void setDestination(String destination) {
-        this.destination = destination;
+    public void setLat(double lat) {
+        this.lat = lat;
+    }
+
+    public void setLng(double lng) {
+        this.lng = lng;
     }
 
     public void setPoiType(int markerID) {
@@ -47,11 +54,15 @@ public class Poi {
         return this.poiID;
     }
 
-    public String getDestination() {
-        return this.destination;
+    public double getLat() {
+        return this.lat;
     }
 
-    public int getPoiType() {
+    public double getLng() {
+        return this.lng;
+    }
+
+    public int getMarkerID() {
         return this.markerID;
     }
 }

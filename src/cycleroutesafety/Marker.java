@@ -6,12 +6,12 @@ package cycleroutesafety;
  * shows some general information about the given POI that it represents.
  * 
  * It has a
- * markerID for DB purposes
- * description that tells some information about the represented POI
- * markerType that tells info about the underlying POI like if it is a hazard,
- * an interesting place like a free-air pump or drinking water availability.
+ * - markerID for DB purposes
+ * - description that tells some information about the represented POI
+ * - markerType that tells info about the underlying POI like if it is a hazard,
+ * or an interesting place like a free-air pump or drinking water availability.
  * 
- * @author Andor
+ * @author Andor Horvath
  */
 public class Marker {
 
@@ -28,6 +28,7 @@ public class Marker {
             String markerType) {
         this.markerID = markerID;
         this.description = description;
+        // markerType contains the icon used for the marker
         this.markerType = markerType;
     }
 
@@ -36,7 +37,7 @@ public class Marker {
         return "[" + this.markerID + "; " + this.description + "; " + this.markerType + "]";
     }
 
-    public void setDescription(String description) {
+    public void setMarkerDescription(String description) {
         this.description = description;
     }
 

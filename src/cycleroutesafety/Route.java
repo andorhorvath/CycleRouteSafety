@@ -9,7 +9,7 @@ package cycleroutesafety;
  * length as an important property
  * last update time that can be relevant to know the relevancy of a route's POIs
  * 
- * @author Andor
+ * @author Andor Horvath
  */
 public class Route {
 
