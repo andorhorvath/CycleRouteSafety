@@ -297,7 +297,7 @@ public class Main {
         addMarker.setLayout(new GridLayout(5, 1));
         addMarker.setVisible(false);
 
-        JButton createMarker = new JButton("Markertípus felvétele");
+        JButton createMarker = new JButton("Új Markertípus…");
         createMarker.setPreferredSize(new Dimension(150, 15));  //was 30
         createMarker.setBorder(null);
         createMarker.setForeground(Color.WHITE);
