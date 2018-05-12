@@ -27,71 +27,23 @@ public class ManageDatabase {
     private final String dbDomain = ("jdbc:mysql://localhost/" + dbName + "?useLegacyDatetimeCode=false&serverTimezone=Europe/Paris");
 
     /**
-     * Dummy solution for getting the row number of Routes table. It may be
-     * beneficial to use count(*) just to eliminate the CPU overhead on the
-     * client running the java program. Or implement an approximation query that
-     * is not O(n) on the row number. select * from information_schema.TABLES
-     * where table_name = 'routes'
-     *
-     * @return number of rows in Route table
-     */
-    public int numberOfRoutes() {
-        int counter = 0;
-        try {
-            conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
-            query = "SELECT * from routes";
-            PreparedStatement stm = conn.prepareStatement(query);
-            rs = stm.executeQuery();
-            counter = -1;
-            while (rs.next()) {
-                ++counter;
-            }
-            conn.close();
-        } catch (SQLException e) {
-            logSQLException(e);
-        }
-        return counter;
-    }
-
-    /**
      * Dummy solution for getting the row number of Markers table.
      *
      * @return number of rows in Markers table
      */
-    public int numberOfMarkers() {
+    public int countNumberOfMarkers() {
         int counter = 0;
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
-            query = "SELECT * from routes";
+            query = "SELECT * from markers";
             PreparedStatement stm = conn.prepareStatement(query);
             rs = stm.executeQuery();
-            counter = -1;
+            counter = 0;
+            rs.beforeFirst();
             while (rs.next()) {
                 ++counter;
             }
-            conn.close();
-        } catch (SQLException e) {
-            logSQLException(e);
-        }
-        return counter;
-    }
-
-    /**
-     * Dummy solution for getting the row number of the Pois table.
-     *
-     * @return number of rows in Pois table
-     */
-    public int numberOfPois() {
-        int counter = 0;
-        try {
-            conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
-            query = "SELECT * from pois";
-            PreparedStatement stm = conn.prepareStatement(query);
-            rs = stm.executeQuery();
-            counter = -1;
-            while (rs.next()) {
-                ++counter;
-            }
+            System.out.println("## DEBUG   MARKERS tabla sorainak szama: " + counter);
             conn.close();
         } catch (SQLException e) {
             logSQLException(e);
@@ -112,6 +64,7 @@ public class ManageDatabase {
             query = "SELECT * from routes";
             PreparedStatement stm = conn.prepareStatement(query);
             rs = stm.executeQuery();
+            rs.beforeFirst();
             while (rs.next()) {
                 allRoutesFromDb.add(new Route(
                         rs.getInt("routeID"),
@@ -145,6 +98,7 @@ public class ManageDatabase {
             query = "SELECT * from pois";
             PreparedStatement stm = conn.prepareStatement(query);
             rs = stm.executeQuery();
+            rs.beforeFirst();
             while (rs.next()) {
                 allPoisFromDb.add(new Poi(
                         rs.getInt("poiID"),
@@ -174,6 +128,7 @@ public class ManageDatabase {
             query = "SELECT * from markers";
             PreparedStatement stm = conn.prepareStatement(query);
             rs = stm.executeQuery();
+            rs.beforeFirst();
             while (rs.next()) {
                 allMarkersFromDb.add(new Marker(
                         rs.getInt("markerID"),

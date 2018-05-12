@@ -466,33 +466,23 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     }
 
     /**
-     * Converts a pair of from address, to address to the following string:
-     * <From: fromAddress> <To: toAddress> with adding the marks.
-     * 
-     * @param textFrom
-     * @param textTo
-     * @return the complete String as per description
-     */
-    public String textFromTo(String textFrom, String textTo) {
-        return "<From: " + textFrom + "> <To: " + textTo + ">";
-    }
-
-    /**
      * Creates a route according to the current state of the UI, saving the 
      * route to the database. It also sends a status message to the message bar
      * on the map.
      * 
      * @param messageBar
      */
-    public void createRoute(JTextArea messageBar) {
+    public void createRoute(JTextArea messageBar, String newRouteName) {
         ManageDatabase manageDatabase = new ManageDatabase();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date date = new Date();
         String textFrom = fromField.getText();
         String textTo = toField.getText();
-        manageDatabase.createRoute(textFromTo(textFrom, textTo),
+
+//2        manageDatabase.createRoute(textFromTo(textFrom, textTo),
+        manageDatabase.createRoute(newRouteName,
                 "ahorvath", textFrom, textTo, 1, dateFormat.format(date), true);
-        String text = "Sikeres mentés: " + "[From:] " + textFrom + " [To:] " + textTo;
+        String text = "Sikeres mentés: " + newRouteName;
         addText(messageBar, text);
         JOptionPane.showMessageDialog(null, text);
     }
@@ -530,10 +520,14 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         Date date = new Date();
         String textFrom = fromField.getText();
         String textTo = toField.getText();
-        manageDatabase.modifyRoute(route.getRouteID(), textFromTo(textFrom, textTo),
+
+//2        manageDatabase.modifyRoute(route.getRouteID(), textFromTo(textFrom, textTo),
+//2                "ahorvath", textFrom, textTo, 1, dateFormat.format(date), true);
+//2        manageDatabase.createRoute(textFromTo(textFrom, textTo),
+// getter setter a fejlecre
+        manageDatabase.modifyRoute(route.getRouteID(), route.getRouteName(),
                 "ahorvath", textFrom, textTo, 1, dateFormat.format(date), true);
-        String text = "Sikeres mentés:\n"
-                + "Erről:\n" + route.getRouteName() + "\nErre:\n[From:] " + textFrom + " [To:] " + textTo;
+        String text = "Sikeres útvonal-felülírás történt: " + route.getRouteName() + " útvonalra";
         addText(messageBar, text);
         JOptionPane.showMessageDialog(null, text);
     }
@@ -567,7 +561,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         ManageDatabase manageDatabase = new ManageDatabase();
         manageDatabase.deleteRoute(route.getRouteID());
         String text = "Sikeres törlés:\n"
-                + textFromTo(route.getStartPoint(), route.getFinishPoint())
+                + route.getRouteName()
                 + "\n(ID " + route.getRouteID() + ")";
         addText(messageBar, text);
         JOptionPane.showMessageDialog(null, text);

@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,7 +28,7 @@ public class Main {
     public static Color off = Color.lightGray;
     public static Color on = Color.white;
     public static File tempStaticMarkerFileStore = null;
-
+    
     public static void main(String[] args) {
 
         ManageDatabase manageDatabase = new ManageDatabase();
@@ -47,14 +46,14 @@ public class Main {
         JPanel messagePanel = new JPanel();
         messagePanel.add(messageBar);
 
-        final JTextField addressBar = new JTextField();
-        addressBar.setEditable(false);
-        String text = map.textFromTo(map.getFromField().getText(), map.getToField().getText());
-        addressBar.setText(text);
+        final JTextField routeNameBar = new JTextField();
+        routeNameBar.setEditable(false);
+        String text = "Nincs útvonal betöltve...";//map.textFromTo(map.getFromField().getText(), map.getToField().getText());
+        routeNameBar.setText(text);
 
-        JPanel addressPane = new JPanel(new FlowLayout());
-        addressPane.add(new JLabel(" Betöltött útvonal: "));
-        addressPane.add(addressBar);
+        JPanel routeNamePane = new JPanel(new FlowLayout());
+        routeNamePane.add(new JLabel(" Betöltött útvonal: "));
+        routeNamePane.add(routeNameBar);
 
         // building the Right panel to manage routes
         JButton createRoute = new JButton("Mentés új útvonalként");
@@ -100,7 +99,10 @@ public class Main {
         // adding ActionListeners to route management JButtons
         createRoute.addActionListener((ActionEvent ae) -> {
             //persist currently displayed route to DB
-            map.createRoute(messageBar);
+            String routeSavingName = JOptionPane.showInputDialog(
+                "Kérem adja meg milyen néven mentse az útvonalat: ");
+            map.createRoute(messageBar, routeSavingName);
+            routeNameBar.setText(routeSavingName);
             //re-read the DB for routes to update the program
             allRoutes = manageDatabase.readRoutes();
             allRoutesList.removeAll();
@@ -123,21 +125,21 @@ public class Main {
                     allRoutesList.add(allRoutes.get(n).getRouteName());
                 }
                 allRoutesList.select(selectedIndexInChoise);
-                addressBar.setText(allRoutesList.getSelectedItem());
+                routeNameBar.setText(allRoutesList.getSelectedItem());
             }
         });
 
         openRoute.addActionListener((ActionEvent ae) -> {
             int selectedIndexInChoise = allRoutesList.getSelectedIndex();
             if (selectedIndexInChoise > 0) {
-                addressBar.setText("");
+                routeNameBar.setText("");
                 map.openRoute(allRoutes.get(selectedIndexInChoise - 1), messageBar);
-                addressBar.setText(allRoutesList.getSelectedItem());
+                routeNameBar.setText(allRoutesList.getSelectedItem());
             } else {
                 DirectionsGeocoder.addText(messageBar, "Nincs mit megnyitni");
                 JOptionPane.showMessageDialog(null, "Nincs mit megnyitni!");
                 modifyRoute.setEnabled(false);
-                addressBar.setText("");
+                routeNameBar.setText("");
             }
         });
 
@@ -165,7 +167,7 @@ public class Main {
             public void actionPerformed(ActionEvent ae) {
                 //az első elem kiválasztása
                 allRoutesList.select(allRoutesList.getItem(1));
-                addressBar.setText("");
+                routeNameBar.setText("");
             }
         });*/
         
@@ -195,8 +197,9 @@ public class Main {
         // building the marker-related part of the GUI
         map.allMarkers = manageDatabase.readMarkers();
         JPanel allMarkersList = new JPanel();
-        int col = 4;
-        allMarkersList.setLayout(new GridLayout(0, col, 1, 1));
+        int cols = computeColsForMarkers(manageDatabase.countNumberOfMarkers());
+        int rows = computeRowsForMarkers(manageDatabase.countNumberOfMarkers());
+        allMarkersList.setLayout(new GridLayout(rows, cols, 1, 1));
         JButton[] markers = new JButton[map.allMarkers.size()];
         for (int n = 0; n < map.allMarkers.size(); ++n) {
             // mm is required to be able to pass the loop 
@@ -364,10 +367,11 @@ public class Main {
                     }
                 });
             }
-            System.out.println(markersArray.length);
+
             for (int i = 0; i < markersArray.length; ++i) {
                 allMarkersList.add(markersArray[i]);
             }
+            allMarkersList.repaint();
             allMarkersList.revalidate();
             allMarkersList.setVisible(true);
         });
@@ -480,8 +484,8 @@ public class Main {
         frame.setPreferredSize(new Dimension(1200, 600));
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        addressBar.setPreferredSize(new Dimension(frame.getWidth(), 30));
-        frame.add(addressPane, BorderLayout.NORTH);
+        routeNameBar.setPreferredSize(new Dimension(frame.getWidth(), 30));
+        frame.add(routeNamePane, BorderLayout.NORTH);
         frame.add(allTools, BorderLayout.EAST);
         messageBar.setLineWrap(true);
         messageBar.setEditable(false);
@@ -520,5 +524,21 @@ public class Main {
             }
         };
     }
-
+    
+    static public Integer computeColsForMarkers(int numberOfMarkers) {
+        return 4;
+    }
+    
+    static public Integer computeRowsForMarkers(int numberOfMarkers) {
+        int cols = computeColsForMarkers(numberOfMarkers);
+        int rows;
+        if (numberOfMarkers % cols == 0) {
+            // if the markers will fill all available space of the final line
+            // in the GUI, then we allocate
+            rows = numberOfMarkers / cols;
+        } else {
+            rows = numberOfMarkers / cols + 1;
+        }
+        return rows;
+    }
 }
