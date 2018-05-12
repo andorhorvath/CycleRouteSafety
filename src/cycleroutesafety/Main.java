@@ -433,9 +433,8 @@ public class Main {
                     toggleAllPois.setText(hideAll);
                 }
             } else {
-                LatLng a = map.getMap().getCenter();
-                LatLng b = a;
-                map.showSpecificPois(a, b, 0.05);
+
+                >>>>  map.showSpecificPois(a, b, 0.05);
                 showOnlyNear.setText(notJustNear);
             }
         });

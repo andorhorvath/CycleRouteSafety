@@ -18,7 +18,6 @@ import com.teamdev.jxmaps.LatLng;
 import com.teamdev.jxmaps.Map;
 import com.teamdev.jxmaps.MapMouseEvent;
 import com.teamdev.jxmaps.MapOptions;
-import com.teamdev.jxmaps.MapReadyHandler;
 import com.teamdev.jxmaps.MapStatus;
 import com.teamdev.jxmaps.MapTypeControlOptions;
 import com.teamdev.jxmaps.TravelMode;
@@ -26,7 +25,6 @@ import com.teamdev.jxmaps.swing.MapView;
 import com.teamdev.jxmaps.Icon;
 import com.teamdev.jxmaps.DirectionsLeg;
 import com.teamdev.jxmaps.DirectionsStep;
-import com.teamdev.jxmaps.DirectionsGeocodedWaypoint;
 import com.teamdev.jxmaps.DirectionsRoute;
 
 import javax.swing.*;
@@ -57,16 +55,16 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     private final String defaultFrom;
     private final String defaultTo;
     public int actualMarkerType = -1;
+    
     public ArrayList<Poi> allPois = new ArrayList<>();
     public ArrayList<Poi> defaultPois = new ArrayList<>();
-    public ArrayList<Poi> nearPois = new ArrayList<>();
+    public ArrayList<Poi> Pois = new ArrayList<>();
     public ArrayList<com.teamdev.jxmaps.Marker> onMapPois = new ArrayList<>();
     public ArrayList<Marker> allMarkers;
-    
-    public ArrayList<DirectionsLeg> directionsLegs = new ArrayList<>();
-    public ArrayList<DirectionsStep> directionsSteps = new ArrayList<>();
-    public ArrayList<DirectionsGeocodedWaypoint> directionsGeocodedWaypoints = new ArrayList<>();
-    
+
+    public DirectionsResult currentDirectionsResult;
+    public ArrayList<LatLng> crossRoads = new ArrayList<>();
+
     JPanel controlPanel;
 
     /**
@@ -423,48 +421,28 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                 // Checking of the operation status
                 if (status == DirectionsStatus.OK) {
                     // Drawing the calculated route on the map
-                    //2if (fromField.getText().equals(toField.getText())) {
-                    //2    map.getDirectionsRenderer().setDirections(result);
-                    //2} else {
-                        map.getDirectionsRenderer().setDirections(result);
-                    //2}
-                    //TODO
-                    int m = 0;
-                    for (DirectionsGeocodedWaypoint loopingWaypoint: result.getGeocodedWaypoints()) {
-                        System.out.println("geoCode kozben kapott result.getGeoCodedWaypoints() " + m + "-edik eleme, TOSTRING(): " + loopingWaypoint.toString());
-                        System.out.println("geoCode kozben kapott result.getGeoCodedWaypoints() " + m + "-edik eleme, getPlaceId(): " + loopingWaypoint.getPlaceId());
-                        ++m;
-                    }
-                    
-                    DirectionsRoute[] routes = result.getRoutes();
+                    map.getDirectionsRenderer().setDirections(result);
 
+            // I am saving the Latlng array that is a part of the returned
+            // DirectionsResult object as I would need this information when
+            // I want to show only the close POIs to the planned route.
+            // DirectionsRoute[] is the returned answer after the geocoding
+            //   >> DirectionsRoute[0] is the firts route planned, the "best"
+            //     >> legs[] is the polylines between each waypoint of the route
+            //       >> steps[] are the straight lines
+            //         >> LatLng[] are each crossings' LatLng coordinates
+                    DirectionsRoute[] routes = result.getRoutes();
                     if (routes.length > 0) {
-                        double distance = 0;
-                        int n = 0;
-                        for (DirectionsLeg leg : routes[0].getLegs()) {
-                            distance += leg.getDistance().getValue();
-                            //leg.getViaWaypoints();
-                            
-                            DirectionsStep[] directionStepsOfLeg = leg.getSteps(); 
-                            System.out.println("for each LEG (number " + n + ") the leg's steps are:");
-                            for (DirectionsStep loopingStep: directionStepsOfLeg) {
-                                System.out.println("    loopingStep is: " + loopingStep.toString() );
-                                System.out.println("    loopingStep instruction is: " + loopingStep.getInstructions() );
-                                LatLng[] getPathResult = loopingStep.getPath();
-                                System.out.println("getPathResult() LatLng array's size is: " + getPathResult.length);
-                                for (LatLng loopingTurnPoints: getPathResult) {
-                                    
+                        for (DirectionsLeg eachLeg : routes[0].getLegs()) {
+                            DirectionsStep[] stepsOfOneLeg = eachLeg.getSteps();
+                            for (DirectionsStep eachStep: stepsOfOneLeg) {
+                                for (LatLng loopingTurnPoints: eachStep.getPath()) {
+                                    crossRoads.add(loopingTurnPoints);
                                 }
                             }
-
-                        }
-                        System.out.println("distance = " + distance);
-
-                        DirectionsGeocodedWaypoint[] theWaypoints = result.getGeocodedWaypoints();
-                        for (DirectionsGeocodedWaypoint oneWaypoint : theWaypoints) {
-                            System.out.println("## DEBUG  the waypoints are: " + oneWaypoint.toString() );
                         }
                     }
+                
                 } else {
                     JOptionPane.showMessageDialog(DirectionsGeocoder.this,
                         "Hiba lépett fel az útvonaltervezéskor. Kérem ellenőrizze, hogy\n"
@@ -708,4 +686,26 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
             }
         });
     }
+    
+    /**
+     * from the currently planned route's each step, loops through all the
+     * crossings and show up only the POIs that are in the radius of each 
+     * crossroads.
+     * @param radius
+     */
+    public ArrayList<Poi> computeNearPois(int radius) {
+        ArrayList<Poi> nearPois = new ArrayList<>();
+        
+        return nearPois;
+    }
+
+    public ArrayList<LatLng> getCrossRoads() {
+        return crossRoads;
+    }
+
+    public void setCrossRoads(ArrayList<LatLng> crossRoads) {
+        this.crossRoads = crossRoads;
+    }
+    
+    
 }
