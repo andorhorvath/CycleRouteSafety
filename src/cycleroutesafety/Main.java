@@ -1,7 +1,5 @@
 package cycleroutesafety;
 
-import com.teamdev.jxmaps.LatLng;
-import com.teamdev.jxmaps.Marker;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -16,7 +14,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,6 +27,7 @@ public class Main {
     public static Color off = Color.lightGray;
     public static Color on = Color.white;
     public static File tempStaticMarkerFileStore = null;
+    public static final double radiusOfClose = 0.01;
     
     public static void main(String[] args) {
 
@@ -137,6 +135,10 @@ public class Main {
                 routeNameBar.setText("");
                 map.openRoute(allRoutes.get(selectedIndexInChoise - 1), messageBar);
                 routeNameBar.setText(allRoutesList.getSelectedItem());
+                // when first starting the program, it does not have any route
+                // when loading a route, we need to init the nearPois set
+                map.nearPois.clear();
+                map.nearPois.addAll(map.computeNearPois(radiusOfClose));
             } else {
                 DirectionsGeocoder.addText(messageBar, "Nincs mit megnyitni");
                 JOptionPane.showMessageDialog(null, "Nincs mit megnyitni!");
