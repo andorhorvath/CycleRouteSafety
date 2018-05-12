@@ -40,6 +40,8 @@ public class Main {
         frame.add(map, BorderLayout.CENTER);
 
         JTextArea messageBar = new JTextArea();
+        //messageBar.setFont(Font.decode("MS Gothic"));
+
         DirectionsGeocoder.addText(messageBar, "Betöltés kész");
 
         JPanel messagePanel = new JPanel();

@@ -24,6 +24,9 @@ import com.teamdev.jxmaps.MapTypeControlOptions;
 import com.teamdev.jxmaps.TravelMode;
 import com.teamdev.jxmaps.swing.MapView;
 import com.teamdev.jxmaps.Icon;
+import com.teamdev.jxmaps.DirectionsLeg;
+import com.teamdev.jxmaps.DirectionsStep;
+import com.teamdev.jxmaps.DirectionsGeocodedWaypoint;
 
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
@@ -58,9 +61,12 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     public ArrayList<Poi> defaultPois = new ArrayList<>();
     public ArrayList<Poi> nearPois = new ArrayList<>();
     public ArrayList<com.teamdev.jxmaps.Marker> onMapPois = new ArrayList<>();
-
     public ArrayList<Marker> allMarkers;
-
+    
+    public ArrayList<DirectionsLeg> directionsLegs = new ArrayList<>();
+    public ArrayList<DirectionsStep> directionsSteps = new ArrayList<>();
+    public ArrayList<DirectionsGeocodedWaypoint> directionsGeocodedWaypoints = new ArrayList<>();
+    
     JPanel controlPanel;
 
     /**
@@ -426,6 +432,14 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                     } else {
                         map.getDirectionsRenderer().setDirections(result);
                     }
+                    //TODO
+                    int m = 0;
+                    for (DirectionsGeocodedWaypoint loopingWaypoint: result.getGeocodedWaypoints()) {
+                        System.out.println("geoCode kozben kapott result.getGeoCodedWaypoints() " + m + "-edik eleme, TOSTRING(): " + loopingWaypoint.toString());
+                        System.out.println("geoCode kozben kapott result.getGeoCodedWaypoints() " + m + "-edik eleme, getPlaceId(): " + loopingWaypoint.getPlaceId());
+                        ++m;
+                    }
+                    //result.
                 } else {
                     JOptionPane.showMessageDialog(DirectionsGeocoder.this,
                         "Hiba lépett fel az útvonaltervezéskor. Kérem ellenőrizze, hogy\n"
