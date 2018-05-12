@@ -27,12 +27,12 @@ import com.teamdev.jxmaps.Icon;
 import com.teamdev.jxmaps.DirectionsLeg;
 import com.teamdev.jxmaps.DirectionsStep;
 import com.teamdev.jxmaps.DirectionsGeocodedWaypoint;
+import com.teamdev.jxmaps.DirectionsRoute;
 
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -85,47 +85,43 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
         configureControlPanel();
 
-        setOnMapReadyHandler(new MapReadyHandler() {
-            @Override
-            public void onMapReady(MapStatus status) {
-
-                final Map map = getMap();
-                // Setting the map center
-                //map.setCenter(new LatLng(41.85, -87.65));
-                // Setting initial zoom value
-                //map.setZoom(10.0);
-                // Creating a map options object
-                MapOptions options = new MapOptions();
-                // Creating a map type control options object
-                MapTypeControlOptions controlOptions = new MapTypeControlOptions();
-                // Changing position of the map type control
-                controlOptions.setPosition(ControlPosition.TOP_RIGHT);
-                // Setting map type control options
-                options.setMapTypeControlOptions(controlOptions);
-                // Setting map options
-                map.setOptions(options);
-
-                // performing a Geocode for the default address to make the 
-                // map be centered on ELTE IK when starting up
-                performGeocode(defaultFrom);
-
-                allPois = readPoisFromDb();
-                defaultPois = readPoisFromDb();
-                addAllPois(allPois, map);
-
-                map.addEventListener("click", new MapMouseEvent() {
-                    @Override
-                    public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
-                        // Creating a new marker
-                        if (actualMarkerType != -1) {
-                            final com.teamdev.jxmaps.Marker marker = new com.teamdev.jxmaps.Marker(map);
-                            Poi newPoi = new Poi(allPois.get(allPois.size() - 1).getPoiID() + 1, mouseEvent.latLng().getLat(), mouseEvent.latLng().getLng(), actualMarkerType);
-                            allPois.add(newPoi);
-                            addPoi(newPoi, marker);
-                        }
+        setOnMapReadyHandler((MapStatus status) -> {
+            final Map map = getMap();
+            // Setting the map center
+            //map.setCenter(new LatLng(41.85, -87.65));
+            // Setting initial zoom value
+            //map.setZoom(10.0);
+            // Creating a map options object
+            MapOptions options = new MapOptions();
+            // Creating a map type control options object
+            MapTypeControlOptions controlOptions = new MapTypeControlOptions();
+            // Changing position of the map type control
+            controlOptions.setPosition(ControlPosition.TOP_RIGHT);
+            // Setting map type control options
+            options.setMapTypeControlOptions(controlOptions);
+            // Setting map options
+            map.setOptions(options);
+            
+            // performing a Geocode for the default address to make the
+            // map be centered on ELTE IK when starting up
+            performGeocode(defaultFrom);
+            
+            allPois = readPoisFromDb();
+            defaultPois = readPoisFromDb();
+            addAllPois(allPois, map);
+            
+            map.addEventListener("click", new MapMouseEvent() {
+                @Override
+                public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
+                    // Creating a new marker
+                    if (actualMarkerType != -1) {
+                        final com.teamdev.jxmaps.Marker marker = new com.teamdev.jxmaps.Marker(map);
+                        Poi newPoi = new Poi(allPois.get(allPois.size() - 1).getPoiID() + 1, mouseEvent.latLng().getLat(), mouseEvent.latLng().getLng(), actualMarkerType);
+                        allPois.add(newPoi);
+                        addPoi(newPoi, marker);
                     }
-                });
-            }
+                }
+            });
         });
     }
 
@@ -427,11 +423,11 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                 // Checking of the operation status
                 if (status == DirectionsStatus.OK) {
                     // Drawing the calculated route on the map
-                    if (fromField.getText().equals(toField.getText())) {
+                    //2if (fromField.getText().equals(toField.getText())) {
+                    //2    map.getDirectionsRenderer().setDirections(result);
+                    //2} else {
                         map.getDirectionsRenderer().setDirections(result);
-                    } else {
-                        map.getDirectionsRenderer().setDirections(result);
-                    }
+                    //2}
                     //TODO
                     int m = 0;
                     for (DirectionsGeocodedWaypoint loopingWaypoint: result.getGeocodedWaypoints()) {
@@ -439,7 +435,36 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                         System.out.println("geoCode kozben kapott result.getGeoCodedWaypoints() " + m + "-edik eleme, getPlaceId(): " + loopingWaypoint.getPlaceId());
                         ++m;
                     }
-                    //result.
+                    
+                    DirectionsRoute[] routes = result.getRoutes();
+
+                    if (routes.length > 0) {
+                        double distance = 0;
+                        int n = 0;
+                        for (DirectionsLeg leg : routes[0].getLegs()) {
+                            distance += leg.getDistance().getValue();
+                            //leg.getViaWaypoints();
+                            
+                            DirectionsStep[] directionStepsOfLeg = leg.getSteps(); 
+                            System.out.println("for each LEG (number " + n + ") the leg's steps are:");
+                            for (DirectionsStep loopingStep: directionStepsOfLeg) {
+                                System.out.println("    loopingStep is: " + loopingStep.toString() );
+                                System.out.println("    loopingStep instruction is: " + loopingStep.getInstructions() );
+                                LatLng[] getPathResult = loopingStep.getPath();
+                                System.out.println("getPathResult() LatLng array's size is: " + getPathResult.length);
+                                for (LatLng loopingTurnPoints: getPathResult) {
+                                    
+                                }
+                            }
+
+                        }
+                        System.out.println("distance = " + distance);
+
+                        DirectionsGeocodedWaypoint[] theWaypoints = result.getGeocodedWaypoints();
+                        for (DirectionsGeocodedWaypoint oneWaypoint : theWaypoints) {
+                            System.out.println("## DEBUG  the waypoints are: " + oneWaypoint.toString() );
+                        }
+                    }
                 } else {
                     JOptionPane.showMessageDialog(DirectionsGeocoder.this,
                         "Hiba lépett fel az útvonaltervezéskor. Kérem ellenőrizze, hogy\n"
@@ -471,6 +496,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * on the map.
      * 
      * @param messageBar
+     * @param newRouteName
      */
     public void createRoute(JTextArea messageBar, String newRouteName) {
         ManageDatabase manageDatabase = new ManageDatabase();
