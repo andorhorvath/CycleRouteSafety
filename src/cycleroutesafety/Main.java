@@ -1,6 +1,7 @@
 package cycleroutesafety;
 
 import com.teamdev.jxmaps.LatLng;
+import com.teamdev.jxmaps.Marker;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -424,6 +426,7 @@ public class Main {
 
         showOnlyNear.addActionListener((ActionEvent ae) -> {
             if (showOnlyNear.getText().equals(notJustNear)) {
+                // show EVERY POI on map
                 map.showAllPois();
                 showOnlyNear.setText(justNear);
                 // changing the other button is also required here to make it
@@ -433,8 +436,14 @@ public class Main {
                     toggleAllPois.setText(hideAll);
                 }
             } else {
-
-                >>>>  map.showSpecificPois(a, b, 0.05);
+                // show only the close POIs on map, but only if there was change
+                // then we need to recount the NearPois
+                if (map.arePoisNeedDbPersist(map.allPois, map.defaultPois)) {
+                    map.nearPois.clear();
+                    map.nearPois.addAll(map.computeNearPois(0.05));
+                }
+                map.setOnMapPoisHided();
+                map.setNearPoisVisible();
                 showOnlyNear.setText(notJustNear);
             }
         });

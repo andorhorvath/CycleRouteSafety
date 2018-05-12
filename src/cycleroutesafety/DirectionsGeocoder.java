@@ -38,6 +38,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Defines the map manager tools, like from field, to field, control panels,
@@ -55,16 +57,16 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     private final String defaultFrom;
     private final String defaultTo;
     public int actualMarkerType = -1;
-    
+
     public ArrayList<Poi> allPois = new ArrayList<>();
     public ArrayList<Poi> defaultPois = new ArrayList<>();
     public ArrayList<Poi> Pois = new ArrayList<>();
     public ArrayList<com.teamdev.jxmaps.Marker> onMapPois = new ArrayList<>();
     public ArrayList<Marker> allMarkers;
 
-    public DirectionsResult currentDirectionsResult;
     public ArrayList<LatLng> crossRoads = new ArrayList<>();
-
+    public HashSet<com.teamdev.jxmaps.Marker> nearPois = new HashSet<>();
+    
     JPanel controlPanel;
 
     /**
@@ -99,15 +101,15 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
             options.setMapTypeControlOptions(controlOptions);
             // Setting map options
             map.setOptions(options);
-            
+
             // performing a Geocode for the default address to make the
             // map be centered on ELTE IK when starting up
             performGeocode(defaultFrom);
-            
+
             allPois = readPoisFromDb();
             defaultPois = readPoisFromDb();
             addAllPois(allPois, map);
-            
+
             map.addEventListener("click", new MapMouseEvent() {
                 @Override
                 public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
@@ -203,32 +205,22 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * @param radius
      */
     public void showSpecificPois(LatLng a, LatLng b, double radius) {
-        double minLat = Math.min(a.getLat(), b.getLat());
-        double minLng = Math.min(a.getLng(), b.getLng());
-        double maxLat = Math.max(a.getLat(), b.getLat());
-        double maxLng = Math.max(a.getLng(), b.getLng());
-//TODO: possible optimization, use streams? https://zeroturnaround.com/rebellabs/java-8-explained-applying-lambdas-to-java-collections/
-        for (int n = 0; n < onMapPois.size(); ++n) {
-            if (onMapPois.get(n).getPosition().getLat() >= minLat - radius
-                    && onMapPois.get(n).getPosition().getLng() >= minLng - radius
-                    && onMapPois.get(n).getPosition().getLng() <= maxLat + radius
-                    && onMapPois.get(n).getPosition().getLng() <= maxLng + radius) {
-                onMapPois.get(n).setVisible(true);
-            } else {
-                onMapPois.get(n).setVisible(false);
-            }
-        }
+
+        // for all POIs
+        //      swetVisible(false);
+        // for all closePOIs
+        //      setVisible(true)
     }
 
     /**
-     * When exiting from the program with newly planted POIs, this is called to 
+     * When exiting from the program with newly planted POIs, this is called to
      * decide whether the question window should be popped, asking for saving
      * them to the DB.
-     * 
+     *
      * Returns true/false if the size of the two input ArrayList of Poi's size
      * is different, or if it's the same, then it checks if any of their Poi's
      * place is modified. If so, returns true. Otherwise returns false.
-     * 
+     *
      * @param poiArrayOne
      * @param poiArrayTwo
      * @return
@@ -255,7 +247,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
     /**
      * Returns the given Marker's type value according to the Marker's ID
-     * 
+     *
      * @param markerID
      * @return markerType value of particular Marker object
      */
@@ -266,8 +258,9 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 //2        for (int n = 0; n < allMarkers.length && !isFoundAlready; ++n) {
 //2            if (markerID == allMarkers[n].getMarkerID()) {
         for (int n = 0; n < allMarkers.size() && !isFoundAlready; ++n) {
-            if (markerID == allMarkers.get(n).getMarkerID())
+            if (markerID == allMarkers.get(n).getMarkerID()) {
                 typeText = allMarkers.get(n).getMarkerType();
+            }
         }
         return typeText;
     }
@@ -287,10 +280,10 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
     /**
      * Setting up the Navigational panel that let the user run new from-to
-     * routes, as it is done in googlemaps API. This configures both the view 
+     * routes, as it is done in googlemaps API. This configures both the view
      * and controller parts of the panel.
-     * 
-     * 
+     *
+     *
      */
     @Override
     public void configureControlPanel() {
@@ -365,6 +358,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
     /**
      * Returns a pre-defined value, 169 for the PreferredHeight.
+     *
      * @return 169
      */
     @Override
@@ -398,7 +392,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
     /**
      * With the two input fields of the navigational panel filled, this call
-     * will manage getting the data from these fields, file a request to the 
+     * will manage getting the data from these fields, file a request to the
      * googlemaps API, receiving the answer then rendering it in the map object
      * while also moving and zooming the map as required according to the from
      * and to addresses.
@@ -423,33 +417,33 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                     // Drawing the calculated route on the map
                     map.getDirectionsRenderer().setDirections(result);
 
-            // I am saving the Latlng array that is a part of the returned
-            // DirectionsResult object as I would need this information when
-            // I want to show only the close POIs to the planned route.
-            // DirectionsRoute[] is the returned answer after the geocoding
-            //   >> DirectionsRoute[0] is the firts route planned, the "best"
-            //     >> legs[] is the polylines between each waypoint of the route
-            //       >> steps[] are the straight lines
-            //         >> LatLng[] are each crossings' LatLng coordinates
+                    // I am saving the Latlng array that is a part of the returned
+                    // DirectionsResult object as I would need this information when
+                    // I want to show only the close POIs to the planned route.
+                    // DirectionsRoute[] is the returned answer after the geocoding
+                    //   >> DirectionsRoute[0] is the firts route planned, the "best"
+                    //     >> legs[] is the polylines between each waypoint of the route
+                    //       >> steps[] are the straight lines
+                    //         >> LatLng[] are each crossings' LatLng coordinates
                     DirectionsRoute[] routes = result.getRoutes();
                     if (routes.length > 0) {
                         for (DirectionsLeg eachLeg : routes[0].getLegs()) {
                             DirectionsStep[] stepsOfOneLeg = eachLeg.getSteps();
-                            for (DirectionsStep eachStep: stepsOfOneLeg) {
-                                for (LatLng loopingTurnPoints: eachStep.getPath()) {
+                            for (DirectionsStep eachStep : stepsOfOneLeg) {
+                                for (LatLng loopingTurnPoints : eachStep.getPath()) {
                                     crossRoads.add(loopingTurnPoints);
                                 }
                             }
                         }
                     }
-                
+
                 } else {
                     JOptionPane.showMessageDialog(DirectionsGeocoder.this,
-                        "Hiba lépett fel az útvonaltervezéskor. Kérem ellenőrizze, hogy\n"
-                        + "- van-e működő internetkapcsolat,\n"
-                        + "- a googlemaps szolgáltatás elérhető-e\n"
-                        + "- a telepítési előfeltételek teljesülnek-e\n"
-                        + "A program futása tovább folytatódik.");
+                            "Hiba lépett fel az útvonaltervezéskor. Kérem ellenőrizze, hogy\n"
+                            + "- van-e működő internetkapcsolat,\n"
+                            + "- a googlemaps szolgáltatás elérhető-e\n"
+                            + "- a telepítési előfeltételek teljesülnek-e\n"
+                            + "A program futása tovább folytatódik.");
                 }
             }
         });
@@ -457,10 +451,9 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
     /**
      * This will append the input parameter text to the input parameter message
-     * bar.
-     * Basically it is used for "alerting" the user about that what happens in
-     * the program actually according to it's use.
-     * 
+     * bar. Basically it is used for "alerting" the user about that what happens
+     * in the program actually according to it's use.
+     *
      * @param messageBar
      * @param text
      */
@@ -469,10 +462,10 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     }
 
     /**
-     * Creates a route according to the current state of the UI, saving the 
+     * Creates a route according to the current state of the UI, saving the
      * route to the database. It also sends a status message to the message bar
      * on the map.
-     * 
+     *
      * @param messageBar
      * @param newRouteName
      */
@@ -495,7 +488,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * Creates a Marker with it's type and description fields specified by the
      * input parameters. It will also take message bar for input, where it will
      * be able to write some status messages about it's work.
-     * 
+     *
      * @param messageBar
      * @param description
      * @param markerType
@@ -512,9 +505,9 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
     /**
      * Modify an existing, opened route that is currently displayed on the map.
-     * Saving the new from and to fields.
-     * It also displays it's status messages for the given messageBar.
-     * 
+     * Saving the new from and to fields. It also displays it's status messages
+     * for the given messageBar.
+     *
      * @param route
      * @param messageBar
      */
@@ -537,10 +530,10 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     }
 
     /**
-     * Opens a route to display it on the currently shown map.
-     * It will also display it's status messages on the message bar it got as
-     * input parameter.
-     * 
+     * Opens a route to display it on the currently shown map. It will also
+     * display it's status messages on the message bar it got as input
+     * parameter.
+     *
      * @param route
      * @param messageBar
      */
@@ -557,7 +550,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * Deletes the currently shown route from the map and also from the DB.
      * Calling this function will erase everything about the currently open
      * route, making it impossible to recover it's data.
-     * 
+     *
      * @param route
      * @param messageBar
      */
@@ -574,7 +567,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     /**
      * Reads the all the pois from the database, and puts them to the returned
      * arrayList object of Poi objects.
-     * 
+     *
      * @return array list of Pois stored in the database
      */
     public ArrayList<Poi> readPoisFromDb() {
@@ -631,10 +624,9 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
     /**
      * Updates the navigation panel's from address while also geocoding it, and
-     * returning the results of the route planning to this new address.
-     * The new address that will be geocoded is taken from the inputfield as a 
-     * string.
-     * 
+     * returning the results of the route planning to this new address. The new
+     * address that will be geocoded is taken from the inputfield as a string.
+     *
      * @param text
      */
     public void updateFromFieldText(String text) {
@@ -660,10 +652,9 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
     /**
      * Updates the navigation panel's to address while also geocoding it, and
-     * returning the results of the route planning to this new address.
-     * The new address that will be geocoded is taken from the inputfield as a 
-     * string.
-     * 
+     * returning the results of the route planning to this new address. The new
+     * address that will be geocoded is taken from the inputfield as a string.
+     *
      * @param text
      */
     public void updateToFieldText(String text) {
@@ -686,19 +677,62 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
             }
         });
     }
-    
+
     /**
      * from the currently planned route's each step, loops through all the
-     * crossings and show up only the POIs that are in the radius of each 
+     * crossings and show up only the POIs that are in the radius of each
      * crossroads.
+     *
      * @param radius
+     * @return an arrayList of Pois, containg all the POIs that are close to the
+     * road
      */
-    public ArrayList<Poi> computeNearPois(int radius) {
-        ArrayList<Poi> nearPois = new ArrayList<>();
-        
+    public HashSet<com.teamdev.jxmaps.Marker> computeNearPois(double radius) {
+        HashSet<com.teamdev.jxmaps.Marker> nearPois = new HashSet<>();
+
+        for (LatLng eachCrossRoad : this.crossRoads) {
+            double xrLat = eachCrossRoad.getLat();
+            double xrLng = eachCrossRoad.getLng();
+            for (int n = 0; n < onMapPois.size(); ++n) {
+                LatLng poiLatLng = onMapPois.get(n).getPosition();
+                //TODO: possible optimization, use streams? https://zeroturnaround.com/rebellabs/java-8-explained-applying-lambdas-to-java-collections/
+                if (poiLatLng.getLat() >= xrLat - radius
+                        && poiLatLng.getLng() >= xrLng - radius
+                        && poiLatLng.getLat() <= xrLat + radius
+                        && poiLatLng.getLng() <= xrLng + radius) {
+                    nearPois.add(onMapPois.get(n));
+                } else {
+                    onMapPois.get(n).setVisible(false);
+                }
+            }
+        }
         return nearPois;
     }
-
+    
+    public void setNearPoisVisible() {
+        for (com.teamdev.jxmaps.Marker eachNearPoi : nearPois) {
+            eachNearPoi.setVisible(true);
+        }
+    }
+    
+    public void setNearPoisHided() {
+        for (com.teamdev.jxmaps.Marker eachNearPoi : nearPois) {
+            eachNearPoi.setVisible(false);
+        }
+    }
+    
+    public void setOnMapPoisVisible() {
+        for (com.teamdev.jxmaps.Marker eachOnMapPoi : onMapPois) {
+            eachOnMapPoi.setVisible(true);
+        }
+    }
+    
+    public void setOnMapPoisHided() {
+        for (com.teamdev.jxmaps.Marker eachOnMapPoi : onMapPois) {
+            eachOnMapPoi.setVisible(false);
+        }
+    }
+    
     public ArrayList<LatLng> getCrossRoads() {
         return crossRoads;
     }
@@ -706,6 +740,5 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     public void setCrossRoads(ArrayList<LatLng> crossRoads) {
         this.crossRoads = crossRoads;
     }
-    
-    
+
 }
