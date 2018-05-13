@@ -741,4 +741,13 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         this.crossRoads = crossRoads;
     }
 
+    public ArrayList<Marker> getAllMarkers() {
+        return allMarkers;
+    }
+
+    public void setAllMarkers(ArrayList<Marker> allMarkers) {
+        this.allMarkers = allMarkers;
+    }
+
+    
 }

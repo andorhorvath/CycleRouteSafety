@@ -63,6 +63,10 @@ public class Route {
     }
 
     public void setRouteLength(int routeLength) {
+        if (routeLength == 0) {
+            this.routeLength = 0;
+            System.out.println("Az út hossza 0. Ez később működési furcsaságokat okozhat.");
+        }
         this.routeLength = routeLength;
     }
 

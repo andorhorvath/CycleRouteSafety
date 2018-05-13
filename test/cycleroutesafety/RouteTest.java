@@ -5,20 +5,18 @@
  */
 package cycleroutesafety;
 
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
  *
- * @author IEUser
+ * @author Andor Horvath
  */
-public class RouteIT {
+public class RouteTest {
     
-    public RouteIT() {
+    public RouteTest() {
     }
     
     @BeforeClass
@@ -28,14 +26,6 @@ public class RouteIT {
     @AfterClass
     public static void tearDownClass() {
     }
-    
-    @Before
-    public void setUp() {
-    }
-    
-    @After
-    public void tearDown() {
-    }
 
     /**
      * Test of toString method, of class Route.
@@ -44,13 +34,11 @@ public class RouteIT {
     public void testToString() {
         System.out.println("toString");
         Route instance = new Route();
-        String expResult = "";
+        String expResult = "[" + instance.getRouteID() + "; " + instance.getRouteName() + "; " + instance.getAuthor() + "; " + instance.getStartPoint()+ "; " + instance.getFinishPoint() + "; " + instance.getRouteLength() + "; " + instance.getLastUpdateTime() + "]";
         String result = instance.toString();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
-
+    
     /**
      * Test of setRouteName method, of class Route.
      */
@@ -60,8 +48,10 @@ public class RouteIT {
         String routeName = "";
         Route instance = new Route();
         instance.setRouteName(routeName);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        String result = instance.getRouteName();
+
+        assertEquals(result, routeName);
     }
 
     /**
@@ -73,8 +63,10 @@ public class RouteIT {
         String author = "";
         Route instance = new Route();
         instance.setAuthor(author);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        String result = instance.getAuthor();
+        
+        assertEquals(result, author);
     }
 
     /**
@@ -86,8 +78,10 @@ public class RouteIT {
         String startPoint = "";
         Route instance = new Route();
         instance.setStartPoint(startPoint);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        String result = instance.getStartPoint();
+        
+        assertEquals (result, startPoint);
     }
 
     /**
@@ -99,8 +93,10 @@ public class RouteIT {
         String finishPoint = "";
         Route instance = new Route();
         instance.setFinishPoint(finishPoint);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        String result = instance.getFinishPoint();
+        
+        assertEquals (result, finishPoint);
     }
 
     /**
@@ -112,8 +108,6 @@ public class RouteIT {
         int routeLength = 0;
         Route instance = new Route();
         instance.setRouteLength(routeLength);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -125,8 +119,10 @@ public class RouteIT {
         String lastUpdateTime = "";
         Route instance = new Route();
         instance.setLastUpdateTime(lastUpdateTime);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
+        
+        String result = instance.getLastUpdateTime();
+        
+        assertEquals (result, lastUpdateTime);
     }
 
     /**
@@ -139,8 +135,6 @@ public class RouteIT {
         int expResult = 0;
         int result = instance.getRouteID();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -150,11 +144,9 @@ public class RouteIT {
     public void testGetRouteName() {
         System.out.println("getRouteName");
         Route instance = new Route();
-        String expResult = "";
+        String expResult = null;
         String result = instance.getRouteName();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -164,11 +156,9 @@ public class RouteIT {
     public void testGetAuthor() {
         System.out.println("getAuthor");
         Route instance = new Route();
-        String expResult = "";
+        String expResult = null;
         String result = instance.getAuthor();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -178,11 +168,9 @@ public class RouteIT {
     public void testGetStartPoint() {
         System.out.println("getStartPoint");
         Route instance = new Route();
-        String expResult = "";
+        String expResult = null;
         String result = instance.getStartPoint();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -192,11 +180,9 @@ public class RouteIT {
     public void testGetFinishPoint() {
         System.out.println("getFinishPoint");
         Route instance = new Route();
-        String expResult = "";
+        String expResult = null;
         String result = instance.getFinishPoint();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -209,8 +195,6 @@ public class RouteIT {
         int expResult = 0;
         int result = instance.getRouteLength();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
 
     /**
@@ -220,11 +204,9 @@ public class RouteIT {
     public void testGetLastUpdateTime() {
         System.out.println("getLastUpdateTime");
         Route instance = new Route();
-        String expResult = "";
+        String expResult = null;
         String result = instance.getLastUpdateTime();
         assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
     
 }
