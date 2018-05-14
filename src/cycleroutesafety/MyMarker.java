@@ -1,29 +1,29 @@
 package cycleroutesafety;
 
 /**
- * A Marker object generally showing a location on the map, representing a POI
- * that is connected to it. A Marker be put to the map, removed, and onClick it
- * shows some general information about the given POI that it represents.
- * 
- * It has a
- * - markerID for DB purposes
- * - description that tells some information about the represented POI
- * - markerType that tells info about the underlying POI like if it is a hazard,
- * or an interesting place like a free-air pump or drinking water availability.
+ * A MyMarker object generally showing a location on the map, representing a POI
+ that is connected to it. A MyMarker be put to the map, removed, and onClick it
+ shows some general information about the given POI that it represents.
+ 
+ It has a
+ - markerID for DB purposes
+ - description that tells some information about the represented POI
+ - markerType that tells info about the underlying POI like if it is a hazard,
+ or an interesting place like a free-air pump or drinking water availability.
  * 
  * @author Andor Horvath
  */
-public class Marker {
+public class MyMarker {
 
     private int markerID;
     private String description;
     private String markerType;
 
-    public Marker() {
+    public MyMarker() {
 
     }
 
-    public Marker(int markerID,
+    public MyMarker(int markerID,
             String description,
             String markerType) {
         this.markerID = markerID;

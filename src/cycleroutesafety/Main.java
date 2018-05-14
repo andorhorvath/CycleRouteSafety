@@ -388,8 +388,9 @@ public class Main {
         saveThenLoadPois.setOpaque(true);
 
         saveThenLoadPois.addActionListener((ActionEvent ae) -> {
+            //8 persistedPois == allPois
             manageDatabase.refreshPois(map.allPois);
-            map.defaultPois = map.readPoisFromDb();
+            map.persistedPois = map.readPoisFromDb();
             String text1 = "Poik mentésre kerültek";
             DirectionsGeocoder.addText(messageBar, text1);
             JOptionPane.showMessageDialog(null, text1);
@@ -440,7 +441,7 @@ public class Main {
             } else {
                 // show only the close POIs on map, but only if there was change
                 // then we need to recount the NearPois
-                if (map.arePoisNeedDbPersist(map.allPois, map.defaultPois)) {
+                if (map.arePoisNeedDbPersist(map.allPois, map.persistedPois)) {
                     map.nearPois.clear();
                     map.nearPois.addAll(map.computeNearPois(0.05));
                 }
@@ -449,7 +450,7 @@ public class Main {
                 showOnlyNear.setText(notJustNear);
             }
         });
-        // building of the Marker management JPanel with the previously defined
+        // building of the MyMarker management JPanel with the previously defined
         // marker-related JButtons
         JPanel poiTools = new JPanel();
         poiTools.add(new JLabel("Markerek kezelése: "));
@@ -509,7 +510,7 @@ public class Main {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                if (map.arePoisNeedDbPersist(map.allPois, map.defaultPois)) {
+                if (map.arePoisNeedDbPersist(map.allPois, map.persistedPois)) {
                     Object[] options = {"Igen", "Nem"};
                     int confirm = JOptionPane.showOptionDialog(
                             null, "Kilépés előtt szeretnéd menteni a felhelyezett Poikat?",

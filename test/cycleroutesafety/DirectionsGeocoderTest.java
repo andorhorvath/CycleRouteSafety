@@ -64,8 +64,8 @@ public class DirectionsGeocoderTest {
         Poi testPoi = new Poi(999, 1.1, 2.2, 1);
         pois.add(testPoi);
         DirectionsGeocoder instance = new DirectionsGeocoder();
-        cycleroutesafety.Marker testMarker = new cycleroutesafety.Marker(1, "", "");
-        ArrayList<cycleroutesafety.Marker> tempAllMarkers = new ArrayList<>();
+        cycleroutesafety.MyMarker testMarker = new cycleroutesafety.MyMarker(1, "", "");
+        ArrayList<cycleroutesafety.MyMarker> tempAllMarkers = new ArrayList<>();
         tempAllMarkers.add(testMarker);
         instance.setAllMarkers(tempAllMarkers);
         instance.allMarkers.add(testMarker);
@@ -136,7 +136,7 @@ public class DirectionsGeocoderTest {
         DirectionsGeocoder instance = new DirectionsGeocoder();
         String expResult = "";
         
-        ArrayList<cycleroutesafety.Marker> tempAllMarkers = new ArrayList<>(0);
+        ArrayList<cycleroutesafety.MyMarker> tempAllMarkers = new ArrayList<>(0);
         instance.setAllMarkers(tempAllMarkers);
         
         String result = instance.typeOfMarker(markerID);
@@ -387,10 +387,10 @@ public class DirectionsGeocoderTest {
         String description = "";
         String markerType = "";
         DirectionsGeocoder instance = new DirectionsGeocoder();
-        ArrayList<cycleroutesafety.Marker> result = instance.createMarker(messageBar, description, markerType);
+        ArrayList<cycleroutesafety.MyMarker> result = instance.createMarker(messageBar, description, markerType);
         ManageDatabase mdb = new ManageDatabase();
         
-        ArrayList<cycleroutesafety.Marker> expResultDataSet = mdb.readMarkers();
+        ArrayList<cycleroutesafety.MyMarker> expResultDataSet = mdb.readMarkers();
         boolean isEqual = expResultDataSet.equals(result);
         boolean expResult = true;
         assertEquals(expResult, isEqual);

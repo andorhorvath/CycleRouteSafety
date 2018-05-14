@@ -28,25 +28,25 @@ public class MarkerTest {
     }
 
     /**
-     * Test of toString method, of class Marker.
+     * Test of toString method, of class MyMarker.
      */
     @Test
     public void testToString() {
         System.out.println("toString");
-        Marker instance = new Marker();
+        MyMarker instance = new MyMarker();
         String expResult = "[" + instance.getMarkerID() + "; " + instance.getMarkerDescription() + "; " + instance.getMarkerType() + "]";
         String result = instance.toString();
         assertEquals(expResult, result);
     }
 
     /**
-     * Test of setMarkerDescription method, of class Marker.
+     * Test of setMarkerDescription method, of class MyMarker.
      */
     @Test
     public void testSetMarkerDescription() {
         System.out.println("setMarkerDescription");
         String description = "";
-        Marker instance = new Marker();
+        MyMarker instance = new MyMarker();
         instance.setMarkerDescription(description);
         
         String result = instance.getMarkerDescription();
@@ -55,13 +55,13 @@ public class MarkerTest {
     }
 
     /**
-     * Test of seMarkerType method, of class Marker.
+     * Test of seMarkerType method, of class MyMarker.
      */
     @Test
     public void testSeMarkerType() {
         System.out.println("seMarkerType");
         String markerType = "";
-        Marker instance = new Marker();
+        MyMarker instance = new MyMarker();
         instance.seMarkerType(markerType);
         
         String result = instance.getMarkerType();
@@ -70,36 +70,36 @@ public class MarkerTest {
     }
 
     /**
-     * Test of getMarkerID method, of class Marker.
+     * Test of getMarkerID method, of class MyMarker.
      */
     @Test
     public void testGetMarkerID() {
         System.out.println("getMarkerID");
-        Marker instance = new Marker();
+        MyMarker instance = new MyMarker();
         int expResult = 0;
         int result = instance.getMarkerID();
         assertEquals(expResult, result);
     }
 
     /**
-     * Test of getMarkerDescription method, of class Marker.
+     * Test of getMarkerDescription method, of class MyMarker.
      */
     @Test
     public void testGetMarkerDescription() {
         System.out.println("getMarkerDescription");
-        Marker instance = new Marker();
+        MyMarker instance = new MyMarker();
         String expResult = null;
         String result = instance.getMarkerDescription();
         assertEquals(expResult, result);
     }
 
     /**
-     * Test of getMarkerType method, of class Marker.
+     * Test of getMarkerType method, of class MyMarker.
      */
     @Test
     public void testGetMarkerType() {
         System.out.println("getMarkerType");
-        Marker instance = new Marker();
+        MyMarker instance = new MyMarker();
         String expResult = null;
         String result = instance.getMarkerType();
         assertEquals(expResult, result);

@@ -57,18 +57,23 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     private final String defaultFrom;
     private final String defaultTo;
     public int actualMarkerType = -1;
-
+    /**
+     * Contains the persisted POIs and if there are any, it also contains the
+     * "newly" dropped POIs, that are not persisted to the db yet
+     */
     public ArrayList<Poi> allPois = new ArrayList<>();
-    public ArrayList<Poi> defaultPois = new ArrayList<>();
-    public ArrayList<Poi> Pois = new ArrayList<>();
-    public ArrayList<com.teamdev.jxmaps.Marker> onMapPois = new ArrayList<>();
-    public ArrayList<Marker> allMarkers;
+    /**
+     * Contains the persisted POI's every time
+     */
+    public ArrayList<Poi> persistedPois = new ArrayList<>();
+    public ArrayList<com.teamdev.jxmaps.Marker> jxMarkersOnMap = new ArrayList<>();
+    public ArrayList<MyMarker> allMarkers;
 
     public ArrayList<LatLng> crossRoads = new ArrayList<>();
     public HashSet<com.teamdev.jxmaps.Marker> nearPois = new HashSet<>();
     
     JPanel controlPanel;
-
+    public Map map;
     /**
      * The constructor creates the map object, while also creating and
      * configuring the GUI to manage the map and it's services.
@@ -81,12 +86,12 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
         fromField = new JTextField(defaultFrom);
         toField = new JTextField(defaultTo);
-        onMapPois = new ArrayList<>();
+        jxMarkersOnMap = new ArrayList<>();
 
         configureControlPanel();
 
         setOnMapReadyHandler((MapStatus status) -> {
-            final Map map = getMap();
+            map = getMap();
             // Setting the map center
             //map.setCenter(new LatLng(41.85, -87.65));
             // Setting initial zoom value
@@ -107,7 +112,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
             performGeocode(defaultFrom);
 
             allPois = readPoisFromDb();
-            defaultPois = readPoisFromDb();
+            persistedPois = allPois;
             addAllPois(allPois, map);
 
             map.addEventListener("click", new MapMouseEvent() {
@@ -127,13 +132,13 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
     /**
      * Creates a POI while also making it visible on the map object with a
-     * JxMaps-Marker. Also binding the onClick action's event listener.
+ JxMaps-MyMarker. Also binding the onClick action's event listener.
      *
      * @param poi
      * @param jxMapsMarker
      */
     public void addPoi(Poi poi, com.teamdev.jxmaps.Marker jxMapsMarker) {
-        //setting the Marker's type & 
+        //setting the MyMarker's type & 
         String actualMarkerPicture = typeOfMarker(poi.getMarkerID());
         Icon icon = new Icon();
         icon.loadFromStream(DirectionsGeocoder.class.getResourceAsStream(actualMarkerPicture), "png");
@@ -156,7 +161,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                 jxMapsMarker.remove();
             }
         });
-        onMapPois.add(jxMapsMarker);
+        jxMarkersOnMap.add(jxMapsMarker);
     }
 
     /**
@@ -180,8 +185,8 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * them on the map.
      */
     public void hideAllPois() {
-        for (int n = 0; n < onMapPois.size(); ++n) {
-            onMapPois.get(n).setVisible(false);
+        for (int n = 0; n < jxMarkersOnMap.size(); ++n) {
+            jxMarkersOnMap.get(n).setVisible(false);
         }
     }
 
@@ -190,8 +195,8 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * them be displayed on the map.
      */
     public void showAllPois() {
-        for (int n = 0; n < onMapPois.size(); ++n) {
-            onMapPois.get(n).setVisible(true);
+        for (int n = 0; n < jxMarkersOnMap.size(); ++n) {
+            jxMarkersOnMap.get(n).setVisible(true);
         }
     }
 
@@ -246,10 +251,10 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     }
 
     /**
-     * Returns the given Marker's type value according to the Marker's ID
+     * Returns the given MyMarker's type value according to the MyMarker's ID
      *
      * @param markerID
-     * @return markerType value of particular Marker object
+     * @return markerType value of particular MyMarker object
      */
     public String typeOfMarker(int markerID) {
         String typeText = "";
@@ -485,8 +490,8 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     }
 
     /**
-     * Creates a Marker with it's type and description fields specified by the
-     * input parameters. It will also take message bar for input, where it will
+     * Creates a MyMarker with it's type and description fields specified by the
+ input parameters. It will also take message bar for input, where it will
      * be able to write some status messages about it's work.
      *
      * @param messageBar
@@ -494,7 +499,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * @param markerType
      * @return
      */
-    public ArrayList<Marker> createMarker(JTextArea messageBar, String description, String markerType) {
+    public ArrayList<MyMarker> createMarker(JTextArea messageBar, String description, String markerType) {
         ManageDatabase manageDatabase = new ManageDatabase();
         manageDatabase.createMarker(description, markerType);
         String text = "Sikeres mentés: " + markerType;
@@ -693,16 +698,16 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         for (LatLng eachCrossRoad : this.crossRoads) {
             double xrLat = eachCrossRoad.getLat();
             double xrLng = eachCrossRoad.getLng();
-            for (int n = 0; n < onMapPois.size(); ++n) {
-                LatLng poiLatLng = onMapPois.get(n).getPosition();
+            for (int n = 0; n < jxMarkersOnMap.size(); ++n) {
+                LatLng poiLatLng = jxMarkersOnMap.get(n).getPosition();
                 //TODO: possible optimization, use streams? https://zeroturnaround.com/rebellabs/java-8-explained-applying-lambdas-to-java-collections/
                 if (poiLatLng.getLat() >= xrLat - radius
                         && poiLatLng.getLng() >= xrLng - radius
                         && poiLatLng.getLat() <= xrLat + radius
                         && poiLatLng.getLng() <= xrLng + radius) {
-                    nearPois.add(onMapPois.get(n));
+                    nearPois.add(jxMarkersOnMap.get(n));
                 } else {
-                    onMapPois.get(n).setVisible(false);
+                    jxMarkersOnMap.get(n).setVisible(false);
                 }
             }
         }
@@ -722,13 +727,13 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     }
     
     public void setOnMapPoisVisible() {
-        for (com.teamdev.jxmaps.Marker eachOnMapPoi : onMapPois) {
+        for (com.teamdev.jxmaps.Marker eachOnMapPoi : jxMarkersOnMap) {
             eachOnMapPoi.setVisible(true);
         }
     }
     
     public void setOnMapPoisHided() {
-        for (com.teamdev.jxmaps.Marker eachOnMapPoi : onMapPois) {
+        for (com.teamdev.jxmaps.Marker eachOnMapPoi : jxMarkersOnMap) {
             eachOnMapPoi.setVisible(false);
         }
     }
@@ -741,16 +746,16 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         this.crossRoads = crossRoads;
     }
 
-    public ArrayList<Marker> getAllMarkers() {
+    public ArrayList<MyMarker> getAllMarkers() {
         return allMarkers;
     }
 
-    public void setAllMarkers(ArrayList<Marker> allMarkers) {
+    public void setAllMarkers(ArrayList<MyMarker> allMarkers) {
         this.allMarkers = allMarkers;
     }
 
-    public Marker getOneMarkerByMarkerID(int markerId) {
-        Marker resultMarker = new Marker();
+    public MyMarker getOneMarkerByMarkerID(int markerId) {
+        MyMarker resultMarker = new MyMarker();
         boolean found = false;
         for (int n = 0; n < this.allMarkers.size() && !found; ++n) {
             if (allMarkers.get(n).getMarkerID() == markerId) {

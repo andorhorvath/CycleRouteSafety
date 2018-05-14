@@ -121,8 +121,8 @@ public class ManageDatabase {
      * @return an arrayList of Markers containing all the markers of the DB.
      *
      */
-    public ArrayList<Marker> readMarkers() {
-        ArrayList<Marker> allMarkersFromDb = new ArrayList<>();
+    public ArrayList<MyMarker> readMarkers() {
+        ArrayList<MyMarker> allMarkersFromDb = new ArrayList<>();
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
             query = "SELECT * from markers";
@@ -130,7 +130,7 @@ public class ManageDatabase {
             rs = stm.executeQuery();
             rs.beforeFirst();
             while (rs.next()) {
-                allMarkersFromDb.add(new Marker(
+                allMarkersFromDb.add(new MyMarker(
                         rs.getInt("markerID"),
                         rs.getString("description"),
                         rs.getString("markerType")
@@ -177,7 +177,7 @@ public class ManageDatabase {
     }
 
     /**
-     * Reads the markerType string from the given markerID's Marker from the DB.
+     * Reads the markerType string from the given markerID's MyMarker from the DB.
      * If SQLexception is happening, it returns an empty string.
      *
      * @param markerID
@@ -246,8 +246,8 @@ public class ManageDatabase {
     }
 
     /**
-     * Creates a new Marker object according to the parameters, then persists it
-     * to the DB with a new ID.
+     * Creates a new MyMarker object according to the parameters, then persists it
+ to the DB with a new ID.
      *
      * @param description
      * @param markerType

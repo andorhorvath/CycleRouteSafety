@@ -241,8 +241,8 @@ public class ManageDatabaseTest {
     public void testReadMarkers() {
         System.out.println("readMarkers");
         ManageDatabase instance = new ManageDatabase();
-        ArrayList<Marker> expResult = null;
-        ArrayList<Marker> result = instance.readMarkers();
+        ArrayList<MyMarker> expResult = null;
+        ArrayList<MyMarker> result = instance.readMarkers();
         assertEquals(expResult, result);
     }
 }
