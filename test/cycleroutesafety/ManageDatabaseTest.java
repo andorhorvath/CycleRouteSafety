@@ -38,7 +38,7 @@ public class ManageDatabaseTest {
     public void testCountNumberOfMarkers() {
         System.out.println("countNumberOfMarkers");
         ManageDatabase instance = new ManageDatabase();
-        int expResult = 5;
+        int expResult = 6;
         int result = instance.countNumberOfMarkers();
         assertEquals(expResult, result);
     }
@@ -102,7 +102,10 @@ public class ManageDatabaseTest {
         String markerType = "";
         ManageDatabase instance = new ManageDatabase();
         instance.createMarker(description, markerType);
+
     }
+    
+    
 
     /**
      * Test of refreshPois method, of class ManageDatabase.
@@ -167,6 +170,17 @@ public class ManageDatabaseTest {
         int poiID = 0;
         ManageDatabase instance = new ManageDatabase();
         instance.deletePoi(poiID);
+    }
+    
+    /**
+     * Test of deleteMarker method, of class ManageDatabase.
+     */
+    @Test
+    public void testDeleteMarker() {
+        System.out.println("deleteMarker");
+        int markerId = 0;
+        ManageDatabase instance = new ManageDatabase();
+        instance.deleteMarker(markerId);
     }
 
     /**

@@ -408,6 +408,46 @@ public class ManageDatabase {
     }
 
     /**
+     * Deletes an entry from the DB, where the marker ID is equal to the one 
+     * given as the parameter.
+     * 
+     * @param markerId
+     */
+    public void deleteMarker(int markerId) {
+        try {
+            conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
+            query = "DELETE FROM markers"
+                    + "WHERE markerId = " + markerId + "";
+            PreparedStatement stm = conn.prepareStatement(query);
+            stm.executeUpdate();
+            conn.close();
+        } catch (SQLException e) {
+            logSQLException(e);
+        }
+    }
+
+    /**
+     * get the last row's markerID value
+     * 
+     * @return 
+     */
+    public int getLastRowMarkerId() {
+        int readMarkerId = 0;
+        try {
+            conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
+            query = "SELECT * FROM markers"
+                    + "ORDER BY markerID DESC LIMIT 1";
+            PreparedStatement stm = conn.prepareStatement(query);
+            rs = stm.executeQuery();
+            readMarkerId = rs.getInt("markerID");
+            conn.close();
+        } catch (SQLException e) {
+            logSQLException(e);
+        }
+        return readMarkerId;
+    }
+    
+    /**
      * prints an error message to standard out for debugging purposes. The goal
      * of the function is to give a little more context than the usually thrown
      * sqlException message.

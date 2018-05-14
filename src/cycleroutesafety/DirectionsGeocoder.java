@@ -749,5 +749,15 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         this.allMarkers = allMarkers;
     }
 
-    
+    public Marker getOneMarkerByMarkerID(int markerId) {
+        Marker resultMarker = new Marker();
+        boolean found = false;
+        for (int n = 0; n < this.allMarkers.size() && !found; ++n) {
+            if (allMarkers.get(n).getMarkerID() == markerId) {
+                found = true;
+                resultMarker = allMarkers.get(n);
+            }
+        }
+        return resultMarker;
+    }
 }
