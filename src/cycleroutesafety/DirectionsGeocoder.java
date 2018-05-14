@@ -20,6 +20,7 @@ import com.teamdev.jxmaps.MapMouseEvent;
 import com.teamdev.jxmaps.MapOptions;
 import com.teamdev.jxmaps.MapStatus;
 import com.teamdev.jxmaps.MapTypeControlOptions;
+import com.teamdev.jxmaps.Marker;
 import com.teamdev.jxmaps.TravelMode;
 import com.teamdev.jxmaps.swing.MapView;
 import com.teamdev.jxmaps.Icon;
@@ -66,11 +67,11 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * Contains the persisted POI's every time
      */
     public ArrayList<Poi> persistedPois = new ArrayList<>();
-    public ArrayList<com.teamdev.jxmaps.Marker> jxMarkersOnMap = new ArrayList<>();
+    public ArrayList<Marker> jxMarkersOnMap = new ArrayList<>();
     public ArrayList<MyMarker> allMarkers;
 
     public ArrayList<LatLng> crossRoads = new ArrayList<>();
-    public HashSet<com.teamdev.jxmaps.Marker> nearPois = new HashSet<>();
+    public HashSet<Marker> nearPois = new HashSet<>();
     
     JPanel controlPanel;
     public Map map;
@@ -120,7 +121,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                 public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
                     // Creating a new marker
                     if (actualMarkerType != -1) {
-                        final com.teamdev.jxmaps.Marker marker = new com.teamdev.jxmaps.Marker(map);
+                        final Marker marker = new Marker(map);
                         Poi newPoi = new Poi(allPois.get(allPois.size() - 1).getPoiID() + 1, mouseEvent.latLng().getLat(), mouseEvent.latLng().getLng(), actualMarkerType);
                         allPois.add(newPoi);
                         addPoi(newPoi, marker);
@@ -137,7 +138,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * @param poi
      * @param jxMapsMarker
      */
-    public void addPoi(Poi poi, com.teamdev.jxmaps.Marker jxMapsMarker) {
+    public void addPoi(Poi poi, Marker jxMapsMarker) {
         //setting the MyMarker's type & 
         String actualMarkerPicture = typeOfMarker(poi.getMarkerID());
         Icon icon = new Icon();
@@ -175,7 +176,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         // may be higher. See references:
         // 3-reasons-why-you-shouldnt-replace-your-for-loops-by-stream-foreach
         for (Poi loopingPoi : pois) {
-            final com.teamdev.jxmaps.Marker marker = new com.teamdev.jxmaps.Marker(map);
+            final Marker marker = new Marker(map);
             addPoi(loopingPoi, marker);
         }
     }
@@ -692,8 +693,8 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * @return an arrayList of Pois, containg all the POIs that are close to the
      * road
      */
-    public HashSet<com.teamdev.jxmaps.Marker> computeNearPois(double radius) {
-        HashSet<com.teamdev.jxmaps.Marker> nearPois = new HashSet<>();
+    public HashSet<Marker> computeNearPois(double radius) {
+        HashSet<Marker> nearMarkers = new HashSet<>();
 
         for (LatLng eachCrossRoad : this.crossRoads) {
             double xrLat = eachCrossRoad.getLat();
@@ -705,35 +706,33 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                         && poiLatLng.getLng() >= xrLng - radius
                         && poiLatLng.getLat() <= xrLat + radius
                         && poiLatLng.getLng() <= xrLng + radius) {
-                    nearPois.add(jxMarkersOnMap.get(n));
-                } else {
-                    jxMarkersOnMap.get(n).setVisible(false);
+                    nearMarkers.add(jxMarkersOnMap.get(n));
                 }
             }
         }
-        return nearPois;
+        return nearMarkers;
     }
     
     public void setNearPoisVisible() {
-        for (com.teamdev.jxmaps.Marker eachNearPoi : nearPois) {
+        for (Marker eachNearPoi : nearPois) {
             eachNearPoi.setVisible(true);
         }
     }
     
     public void setNearPoisHided() {
-        for (com.teamdev.jxmaps.Marker eachNearPoi : nearPois) {
+        for (Marker eachNearPoi : nearPois) {
             eachNearPoi.setVisible(false);
         }
     }
     
     public void setOnMapPoisVisible() {
-        for (com.teamdev.jxmaps.Marker eachOnMapPoi : jxMarkersOnMap) {
+        for (Marker eachOnMapPoi : jxMarkersOnMap) {
             eachOnMapPoi.setVisible(true);
         }
     }
     
     public void setOnMapPoisHided() {
-        for (com.teamdev.jxmaps.Marker eachOnMapPoi : jxMarkersOnMap) {
+        for (Marker eachOnMapPoi : jxMarkersOnMap) {
             eachOnMapPoi.setVisible(false);
         }
     }
