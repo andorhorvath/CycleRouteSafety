@@ -18,6 +18,7 @@ public class Poi {
     private double lat;
     private double lng;
     private int markerID;
+    private String placeDescription;
 
     public Poi() {
 
@@ -26,16 +27,18 @@ public class Poi {
     public Poi(int poiID,
             double lat,
             double lng,
-            int markerID) {
+            int markerID,
+            String placeDescription) {
         this.poiID = poiID;
         this.lat = lat;
         this.lng = lng;
         this.markerID = markerID;
+        this.placeDescription = placeDescription;
     }
 
     @Override
     public String toString() {
-        return "[" + this.poiID + "; " + this.lat + "; " + this.lng + "; " + this.markerID + "]";
+        return "[" + this.poiID + "; " + this.lat + "; " + this.lng + "; " + this.markerID + "; " + this.placeDescription + "]";
     }
 
     public void setLat(double lat) {
@@ -65,4 +68,14 @@ public class Poi {
     public int getMarkerID() {
         return this.markerID;
     }
+
+    public String getPlaceDescription() {
+        return placeDescription;
+    }
+
+    public void setPlaceDescription(String placeDescription) {
+        this.placeDescription = placeDescription;
+    }
+    
+    
 }

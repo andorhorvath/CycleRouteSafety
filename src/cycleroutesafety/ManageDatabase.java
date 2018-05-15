@@ -43,7 +43,6 @@ public class ManageDatabase {
             while (rs.next()) {
                 ++counter;
             }
-            System.out.println("## DEBUG   MARKERS tabla sorainak szama: " + counter);
             conn.close();
         } catch (SQLException e) {
             logSQLException(e);
@@ -104,12 +103,14 @@ public class ManageDatabase {
                         rs.getInt("poiID"),
                         rs.getDouble("lat"),
                         rs.getDouble("lng"),
-                        rs.getInt("markerID")
+                        rs.getInt("markerID"),
+                        rs.getString("placeDescription")
                 ));
             }
             conn.close();
             return allPoisFromDb;
         } catch (SQLException e) {
+            System.out.println("SQL error in manageDatabase.readPois()");
             logSQLException(e);
         }
         return allPoisFromDb;
@@ -288,12 +289,15 @@ public class ManageDatabase {
                         + "markerID) "
                         + "VALUES('" + newPois.get(n).getLat() + "', "
                         + "'" + newPois.get(n).getLng() + "', "
-                        + "'" + newPois.get(n).getMarkerID() + "')";
+                        + "'" + newPois.get(n).getMarkerID() + "', "
+                        + "'" + newPois.get(n).getPlaceDescription() + "')";
                 stm = conn.prepareStatement(query);
                 stm.executeUpdate();
             }
             conn.close();
         } catch (SQLException e) {
+
+            System.out.println("SQL error in manageDatabase.refreshPois()");
             logSQLException(e);
         }
     }
@@ -348,11 +352,13 @@ public class ManageDatabase {
      * @param lat
      * @param lng
      * @param markerID
+     * @param placeDescription
      */
     public void modifyPoi(int poiID,
             double lat,
             double lng,
-            int markerID) {
+            int markerID,
+            String placeDescription) {
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
             query = "UPDATE pois SET "
@@ -360,11 +366,13 @@ public class ManageDatabase {
                     + "lat='" + lat + "', "
                     + "lat='" + lng + "', "
                     + "markerID='" + markerID + "', "
+                    + "placeDescription='" + placeDescription + "',"
                     + "WHERE poiID=" + poiID + "";
             PreparedStatement stm = conn.prepareStatement(query);
             stm.executeUpdate();
             conn.close();
         } catch (SQLException e) {
+            System.out.println("SQL error in manageDatabase.readPois()");
             logSQLException(e);
         }
     }
@@ -403,6 +411,7 @@ public class ManageDatabase {
             stm.executeUpdate();
             conn.close();
         } catch (SQLException e) {
+            System.out.println("SQL error in manageDatabase.deletePois()");
             logSQLException(e);
         }
     }

@@ -61,7 +61,7 @@ public class DirectionsGeocoderTest {
     public void testAddAllPois() {
         System.out.println("addAllPois");
         ArrayList<Poi> pois = new ArrayList<>();
-        Poi testPoi = new Poi(999, 1.1, 2.2, 1);
+        Poi testPoi = new Poi(999, 1.1, 2.2, 1, "testPoiDescription");
         pois.add(testPoi);
         DirectionsGeocoder instance = new DirectionsGeocoder();
         cycleroutesafety.MyMarker testMarker = new cycleroutesafety.MyMarker(1, "", "");
@@ -91,19 +91,6 @@ public class DirectionsGeocoderTest {
         System.out.println("showAllPois");
         DirectionsGeocoder instance = new DirectionsGeocoder();
         instance.showAllPois();
-    }
-
-    /**
-     * Test of showSpecificPois method, of class DirectionsGeocoder.
-     */
-    @Test
-    public void testShowSpecificPois() {
-        System.out.println("showSpecificPois");
-        LatLng a = null;
-        LatLng b = null;
-        double radius = 0.0;
-        DirectionsGeocoder instance = new DirectionsGeocoder();
-        instance.showSpecificPois(a, b, radius);
     }
 
     /**

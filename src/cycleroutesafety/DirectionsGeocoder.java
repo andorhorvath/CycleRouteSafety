@@ -40,7 +40,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Defines the map manager tools, like from field, to field, control panels,
@@ -93,10 +92,6 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
         setOnMapReadyHandler((MapStatus status) -> {
             map = getMap();
-            // Setting the map center
-            //map.setCenter(new LatLng(41.85, -87.65));
-            // Setting initial zoom value
-            //map.setZoom(10.0);
             // Creating a map options object
             MapOptions options = new MapOptions();
             // Creating a map type control options object
@@ -122,18 +117,22 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                     // Creating a new marker
                     if (actualMarkerType != -1) {
                         final Marker marker = new Marker(map);
-                        Poi newPoi = new Poi(allPois.get(allPois.size() - 1).getPoiID() + 1, mouseEvent.latLng().getLat(), mouseEvent.latLng().getLng(), actualMarkerType);
+                        String poiPlaceDescription = JOptionPane.showInputDialog(
+                        "Kérem adjon meg leírást a POI-hoz: ");
+                        Poi newPoi = new Poi(allPois.get(allPois.size() - 1).getPoiID() + 1, mouseEvent.latLng().getLat(), mouseEvent.latLng().getLng(), actualMarkerType, poiPlaceDescription);
+                        System.out.println("## DEBUG Poi is: " + newPoi.toString());
                         allPois.add(newPoi);
                         addPoi(newPoi, marker);
                     }
                 }
             });
+            System.out.println("Map is ready to use.");
         });
     }
 
     /**
      * Creates a POI while also making it visible on the map object with a
- JxMaps-MyMarker. Also binding the onClick action's event listener.
+     * JxMaps-MyMarker. Also binding the onClick action's event listener.
      *
      * @param poi
      * @param jxMapsMarker
@@ -146,13 +145,29 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         jxMapsMarker.setIcon(icon);
         jxMapsMarker.setPosition(new LatLng(poi.getLat(), poi.getLng()));
 
+        // showing the InfoWindow
         jxMapsMarker.addEventListener("click", new MapMouseEvent() {
             @Override
             public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
+                // show InfoWindow
+                System.out.println("## DEBUG jxMapsMarker.eventListener: CLICK");
+                final InfoWindow window = new InfoWindow(map);
+                // Setting html content to the information window
+                window.setContent("<p>" + poi.getPlaceDescription() + "</p>");
+                // Showing the information window on marker
+                window.open(map, jxMapsMarker);
+
+            }
+        });
+        
+        // on Right Click, deleting the given marker that is under the mnouse
+        jxMapsMarker.addEventListener("rightclick", new MapMouseEvent() {
+            @Override
+            public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
                 // Removing marker from the map
+                System.out.println("## DEBUG jxMapsMarker.eventListener: RIGHTclick");
                 ArrayList<Poi> stayPois = new ArrayList<>();
                 for (int n = 0; n < allPois.size(); ++n) {
-// TODO: possible optimization
                     if (!(allPois.get(n).getLat() == jxMapsMarker.getPosition().getLat()
                             && allPois.get(n).getLng() == jxMapsMarker.getPosition().getLng())) {
                         stayPois.add(allPois.get(n));
@@ -162,6 +177,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                 jxMapsMarker.remove();
             }
         });
+        
         jxMarkersOnMap.add(jxMapsMarker);
     }
 
@@ -199,23 +215,6 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         for (int n = 0; n < jxMarkersOnMap.size(); ++n) {
             jxMarkersOnMap.get(n).setVisible(true);
         }
-    }
-
-    /**
-     * Looping through the map's pois and making visible only the "close" ones.
-     * Basically taking a LatLong "center" point and showing every poi that is
-     * inside the given radius.
-     *
-     * @param a
-     * @param b
-     * @param radius
-     */
-    public void showSpecificPois(LatLng a, LatLng b, double radius) {
-
-        // for all POIs
-        //      swetVisible(false);
-        // for all closePOIs
-        //      setVisible(true)
     }
 
     /**
@@ -260,9 +259,6 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     public String typeOfMarker(int markerID) {
         String typeText = "";
         Boolean isFoundAlready = false;
-//TODO: possible optimization of loop
-//2        for (int n = 0; n < allMarkers.length && !isFoundAlready; ++n) {
-//2            if (markerID == allMarkers[n].getMarkerID()) {
         for (int n = 0; n < allMarkers.size() && !isFoundAlready; ++n) {
             if (markerID == allMarkers.get(n).getMarkerID()) {
                 typeText = allMarkers.get(n).getMarkerType();
@@ -287,9 +283,6 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     /**
      * Setting up the Navigational panel that let the user run new from-to
      * routes, as it is done in googlemaps API. This configures both the view
-     * and controller parts of the panel.
-     *
-     *
      */
     @Override
     public void configureControlPanel() {
@@ -482,7 +475,6 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         String textFrom = fromField.getText();
         String textTo = toField.getText();
 
-//2        manageDatabase.createRoute(textFromTo(textFrom, textTo),
         manageDatabase.createRoute(newRouteName,
                 "ahorvath", textFrom, textTo, 1, dateFormat.format(date), true);
         String text = "Sikeres mentés: " + newRouteName;
@@ -524,9 +516,6 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         String textFrom = fromField.getText();
         String textTo = toField.getText();
 
-//2        manageDatabase.modifyRoute(route.getRouteID(), textFromTo(textFrom, textTo),
-//2                "ahorvath", textFrom, textTo, 1, dateFormat.format(date), true);
-//2        manageDatabase.createRoute(textFromTo(textFrom, textTo),
 // getter setter a fejlecre
         manageDatabase.modifyRoute(route.getRouteID(), route.getRouteName(),
                 "ahorvath", textFrom, textTo, 1, dateFormat.format(date), true);
@@ -596,14 +585,14 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
 
     private void performGeocode(String text) {
         // Getting the associated map object
-        final Map map = getMap();
+        final Map mapObject = getMap();
         // Creating a geocode request
         GeocoderRequest request = new GeocoderRequest();
         // Setting address to the geocode request
         request.setAddress(text);
 
         // Geocoding position by the entered address
-        getServices().getGeocoder().geocode(request, new GeocoderCallback(map) {
+        getServices().getGeocoder().geocode(request, new GeocoderCallback(mapObject) {
             @Override
             public void onComplete(GeocoderResult[] results, GeocoderStatus status) {
                 // Checking operation status
@@ -612,17 +601,17 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                     GeocoderResult result = results[0];
                     // Getting a location of the result
                     LatLng location = result.getGeometry().getLocation();
-                    map.setZoom(12.0);
+                    mapObject.setZoom(12.0);
                     // Setting the map center to result location
-                    map.setCenter(location);
+                    mapObject.setCenter(location);
                     // Creating an information window
-                    InfoWindow infoWindow = new InfoWindow(map);
+                    InfoWindow infoWindow = new InfoWindow(mapObject);
                     // Putting the address and location to the content of the information window
                     infoWindow.setContent("<b>" + result.getFormattedAddress() + "</b><br>" + location.toString());
                     // Moving the information window to the result location
                     infoWindow.setPosition(location);
                     // Showing of the information window
-                    infoWindow.open(map);
+                    infoWindow.open(mapObject);
                 }
             }
         });
@@ -685,7 +674,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     }
 
     /**
-     * from the currently planned route's each step, loops through all the
+     * From the currently planned route's each step, loops through all the
      * crossings and show up only the POIs that are in the radius of each
      * crossroads.
      *

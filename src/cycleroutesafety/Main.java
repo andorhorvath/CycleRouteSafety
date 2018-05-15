@@ -35,8 +35,8 @@ public class Main {
 
         JFrame frame = new JFrame();
         DirectionsGeocoder.loadAndRegisterCustomFonts();
-        final DirectionsGeocoder map = new DirectionsGeocoder();
-        frame.add(map, BorderLayout.CENTER);
+        final DirectionsGeocoder directionsGeocoderMapView = new DirectionsGeocoder();
+        frame.add(directionsGeocoderMapView, BorderLayout.CENTER);
 
         JTextArea messageBar = new JTextArea();
         //messageBar.setFont(Font.decode("MS Gothic"));
@@ -101,7 +101,7 @@ public class Main {
             //persist currently displayed route to DB
             String routeSavingName = JOptionPane.showInputDialog(
                 "Kérem adja meg milyen néven mentse az útvonalat: ");
-            map.createRoute(messageBar, routeSavingName);
+            directionsGeocoderMapView.createRoute(messageBar, routeSavingName);
             routeNameBar.setText(routeSavingName);
             //re-read the DB for routes to update the program
             allRoutes = manageDatabase.readRoutes();
@@ -117,7 +117,7 @@ public class Main {
         modifyRoute.addActionListener((ActionEvent ae) -> {
             int selectedIndexInChoise = allRoutesList.getSelectedIndex();
             if (selectedIndexInChoise > 0) {
-                map.modifyRoute(allRoutes.get(selectedIndexInChoise - 1), messageBar);
+                directionsGeocoderMapView.modifyRoute(allRoutes.get(selectedIndexInChoise - 1), messageBar);
                 allRoutes = manageDatabase.readRoutes();
                 allRoutesList.removeAll();
                 allRoutesList.add("----- Válassz! -----");
@@ -133,12 +133,12 @@ public class Main {
             int selectedIndexInChoise = allRoutesList.getSelectedIndex();
             if (selectedIndexInChoise > 0) {
                 routeNameBar.setText("");
-                map.openRoute(allRoutes.get(selectedIndexInChoise - 1), messageBar);
+                directionsGeocoderMapView.openRoute(allRoutes.get(selectedIndexInChoise - 1), messageBar);
                 routeNameBar.setText(allRoutesList.getSelectedItem());
                 // when first starting the program, it does not have any route
                 // when loading a route, we need to init the nearPois set
-                map.nearPois.clear();
-                map.nearPois.addAll(map.computeNearPois(radiusOfClose));
+                directionsGeocoderMapView.nearPois.clear();
+                directionsGeocoderMapView.nearPois.addAll(directionsGeocoderMapView.computeNearPois(radiusOfClose));
             } else {
                 DirectionsGeocoder.addText(messageBar, "Nincs mit megnyitni");
                 JOptionPane.showMessageDialog(null, "Nincs mit megnyitni!");
@@ -151,7 +151,7 @@ public class Main {
             // reading which route is displayed currently to delete that
             int selectedIndexInChoise = allRoutesList.getSelectedIndex();
             if (selectedIndexInChoise > 0) {
-                map.deleteRoute(allRoutes.get(selectedIndexInChoise - 1), messageBar);
+                directionsGeocoderMapView.deleteRoute(allRoutes.get(selectedIndexInChoise - 1), messageBar);
             } else {
                 String statusText = "Nincs törlésre kijelölt elem.";
                 DirectionsGeocoder.addText(messageBar, statusText);
@@ -199,13 +199,13 @@ public class Main {
         routeTools.setLayout(new GridLayout(routeTools.getComponentCount(), 1, 1, 1));
 
         // building the marker-related part of the GUI
-        map.allMarkers = manageDatabase.readMarkers();
+        directionsGeocoderMapView.allMarkers = manageDatabase.readMarkers();
         JPanel allMarkersList = new JPanel();
         int cols = computeColsForMarkers(manageDatabase.countNumberOfMarkers());
         int rows = computeRowsForMarkers(manageDatabase.countNumberOfMarkers());
         allMarkersList.setLayout(new GridLayout(rows, cols, 1, 1));
-        JButton[] markers = new JButton[map.allMarkers.size()];
-        for (int n = 0; n < map.allMarkers.size(); ++n) {
+        JButton[] markers = new JButton[directionsGeocoderMapView.allMarkers.size()];
+        for (int n = 0; n < directionsGeocoderMapView.allMarkers.size(); ++n) {
             // mm is required to be able to pass the loop 
             // variable "inside" the actionListener, as that is a dynamic
             // content and would not take the loop variable.
@@ -215,7 +215,7 @@ public class Main {
             // buttons be able to PUT markers on the map
             markers[mm] = new JButton();
             markers[mm].setPreferredSize(new Dimension(50, 50));
-            ImageIcon icon = new ImageIcon(DirectionsGeocoder.class.getResource(map.allMarkers.get(n).getMarkerType()));
+            ImageIcon icon = new ImageIcon(DirectionsGeocoder.class.getResource(directionsGeocoderMapView.allMarkers.get(n).getMarkerType()));
             markers[mm].setIcon(icon);
             markers[mm].setBackground(off);
             markers[mm].setOpaque(true);
@@ -223,7 +223,7 @@ public class Main {
                 if (markers[mm].getBackground().equals(off)) {
                     markers[mm].setBackground(on);
                     markers[mm].setSelected(true);
-                    DirectionsGeocoder.addText(messageBar, "Marker lerakása: " + map.allMarkers.get(mm).getMarkerDescription());
+                    DirectionsGeocoder.addText(messageBar, "Marker lerakása: " + directionsGeocoderMapView.allMarkers.get(mm).getMarkerDescription());
                     // if a marker's button is pressed in, PUT-ing marker to map
                     // is possible, and the other buttons should change their
                     // visual
@@ -234,23 +234,23 @@ public class Main {
                             m.setSelected(false);
                         }
                     }
-                    map.actualMarkerType = map.allMarkers.get(mm).getMarkerID();
+                    directionsGeocoderMapView.actualMarkerType = directionsGeocoderMapView.allMarkers.get(mm).getMarkerID();
                 } else {
                     markers[mm].setBackground(off);
                     markers[mm].setSelected(false);
-                    map.actualMarkerType = -1;
+                    directionsGeocoderMapView.actualMarkerType = -1;
                     DirectionsGeocoder.addText(messageBar, "Nincs kijelölve Marker");
                 }
             });
         }
         // adding all markers to the list to be displayed
         
-        int preferredHeight = map.allMarkers.size() / 4 + 1;
+        int preferredHeight = directionsGeocoderMapView.allMarkers.size() / 4 + 1;
         Dimension preferredSize = new Dimension();
         preferredSize.setSize(100, preferredHeight);
         allMarkersList.setPreferredSize(preferredSize);
         
-        for (int n = 0; n < map.allMarkers.size(); ++n) {
+        for (int n = 0; n < directionsGeocoderMapView.allMarkers.size(); ++n) {
             allMarkersList.add(markers[n]);
         }
 
@@ -322,7 +322,7 @@ public class Main {
             addMarker.setVisible(false);
             // saving the markerType with the res prefix because markerType
             // gets only the fileName and the goal directory should be constant
-            map.allMarkers = map.createMarker(messageBar, description.getText(), "res/" + markerType.getText());
+            directionsGeocoderMapView.allMarkers = directionsGeocoderMapView.createMarker(messageBar, description.getText(), "res/" + markerType.getText());
             // copy the browsed file to the res directory for later re-use
             // avoiding false clicks, when no file ia browsed (impossible by 
             // theory the if is not required, but still...)
@@ -341,12 +341,12 @@ public class Main {
                 }
             } // else skip, as there is no file browsed yet...
             
-            JButton[] markersArray = new JButton[map.allMarkers.size()];
-            for (int n = 0; n < map.allMarkers.size(); ++n) {
+            JButton[] markersArray = new JButton[directionsGeocoderMapView.allMarkers.size()];
+            for (int n = 0; n < directionsGeocoderMapView.allMarkers.size(); ++n) {
                 int mm = n;
                 markersArray[mm] = new JButton();
                 markersArray[mm].setPreferredSize(new Dimension(50, 50));
-                ImageIcon icon = new ImageIcon(DirectionsGeocoder.class.getResource(map.allMarkers.get(n).getMarkerType()));
+                ImageIcon icon = new ImageIcon(DirectionsGeocoder.class.getResource(directionsGeocoderMapView.allMarkers.get(n).getMarkerType()));
                 markersArray[mm].setIcon(icon);
                 markersArray[mm].setBackground(off);
                 markersArray[mm].setOpaque(true);
@@ -354,7 +354,7 @@ public class Main {
                     if (markersArray[mm].getBackground().equals(off)) {
                         markersArray[mm].setBackground(on);
                         markersArray[mm].setSelected(true);
-                        DirectionsGeocoder.addText(messageBar, "Marker lerakása: " + map.allMarkers.get(mm).getMarkerDescription());
+                        DirectionsGeocoder.addText(messageBar, "Marker lerakása: " + directionsGeocoderMapView.allMarkers.get(mm).getMarkerDescription());
                         for (int j = 0; j < markersArray.length; ++j) {
                             if (j != mm) {
                                 JButton markerButton = markersArray[j];
@@ -362,11 +362,11 @@ public class Main {
                                 markerButton.setSelected(false);
                             }
                         }
-                        map.actualMarkerType = map.allMarkers.get(mm).getMarkerID();
+                        directionsGeocoderMapView.actualMarkerType = directionsGeocoderMapView.allMarkers.get(mm).getMarkerID();
                     } else {
                         markersArray[mm].setBackground(off);
                         markersArray[mm].setSelected(false);
-                        map.actualMarkerType = -1;
+                        directionsGeocoderMapView.actualMarkerType = -1;
                         DirectionsGeocoder.addText(messageBar, "Nincs kijelölve Marker");
                     }
                 });
@@ -389,8 +389,8 @@ public class Main {
 
         saveThenLoadPois.addActionListener((ActionEvent ae) -> {
             //8 persistedPois == allPois
-            manageDatabase.refreshPois(map.allPois);
-            map.persistedPois = map.readPoisFromDb();
+            manageDatabase.refreshPois(directionsGeocoderMapView.allPois);
+            directionsGeocoderMapView.persistedPois = directionsGeocoderMapView.readPoisFromDb();
             String text1 = "Poik mentésre kerültek";
             DirectionsGeocoder.addText(messageBar, text1);
             JOptionPane.showMessageDialog(null, text1);
@@ -416,13 +416,13 @@ public class Main {
 
         toggleAllPois.addActionListener((ActionEvent ae) -> {
             if (toggleAllPois.getText().equals(showAll)) {
-                map.showAllPois();
+                directionsGeocoderMapView.showAllPois();
                 toggleAllPois.setText(hideAll);
                 // changing the other button's state is important, because 
                 // without it, clicking on showOnlyNear would not result changes
                 showOnlyNear.setText(justNear);
             } else {
-                map.hideAllPois();
+                directionsGeocoderMapView.hideAllPois();
                 toggleAllPois.setText(showAll);
             }
         });
@@ -430,7 +430,7 @@ public class Main {
         showOnlyNear.addActionListener((ActionEvent ae) -> {
             if (showOnlyNear.getText().equals(notJustNear)) {
                 // show EVERY POI on map
-                map.showAllPois();
+                directionsGeocoderMapView.showAllPois();
                 showOnlyNear.setText(justNear);
                 // changing the other button is also required here to make it
                 // logical. If farer (all) POIs are showed, it's not logical
@@ -441,12 +441,12 @@ public class Main {
             } else {
                 // show only the close POIs on map, but only if there was change
                 // then we need to recount the NearPois
-                if (map.arePoisNeedDbPersist(map.allPois, map.persistedPois)) {
-                    map.nearPois.clear();
-                    map.nearPois.addAll(map.computeNearPois(0.05));
+                if (directionsGeocoderMapView.arePoisNeedDbPersist(directionsGeocoderMapView.allPois, directionsGeocoderMapView.persistedPois)) {
+                    directionsGeocoderMapView.nearPois.clear();
+                    directionsGeocoderMapView.nearPois.addAll(directionsGeocoderMapView.computeNearPois(0.05));
                 }
-                map.setOnMapPoisHided();
-                map.setNearPoisVisible();
+                directionsGeocoderMapView.setOnMapPoisHided();
+                directionsGeocoderMapView.setNearPoisVisible();
                 showOnlyNear.setText(notJustNear);
             }
         });
@@ -460,20 +460,12 @@ public class Main {
         poiTools.add(toggleAllPois);
         poiTools.add(showOnlyNear);
         poiTools.setLayout(new GridLayout(poiTools.getComponentCount(), 1, 1, 1));
-        //Dimension poiToolsDimension = new Dimension(5,9);
-        //poiTools.setPreferredSize(poiToolsDimension);
 
-        // adding all 3 type of tools to the RIGHT sidepanel    
+        // adding the 2 type of tools to the RIGHT sidepanel    
         JPanel allTools = new JPanel(new GridLayout(2, 1));
-        //allTools.add(routeTools);
         allTools.add(poiTools);
         allTools.add(addMarker);
-        map.controlPanel.add(routeTools, BorderLayout.SOUTH);
-        /*
-        final DirectionsGeocoder map = new DirectionsGeocoder();
-        frame.add(map, BorderLayout.CENTER);
-        
-        */
+        directionsGeocoderMapView.controlPanel.add(routeTools, BorderLayout.SOUTH);
         
         //TODO: don't allow other buttons to be pushed. Redesign needed...
         /*browser.addTitleListener(new TitleListener() {
@@ -510,14 +502,14 @@ public class Main {
 
             @Override
             public void windowClosing(WindowEvent e) {
-                if (map.arePoisNeedDbPersist(map.allPois, map.persistedPois)) {
+                if (directionsGeocoderMapView.arePoisNeedDbPersist(directionsGeocoderMapView.allPois, directionsGeocoderMapView.persistedPois)) {
                     Object[] options = {"Igen", "Nem"};
                     int confirm = JOptionPane.showOptionDialog(
                             null, "Kilépés előtt szeretnéd menteni a felhelyezett Poikat?",
                             "Exit Confirmation", JOptionPane.YES_NO_OPTION,
                             JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
                     if (confirm == 0) {
-                        manageDatabase.refreshPois(map.allPois);
+                        manageDatabase.refreshPois(directionsGeocoderMapView.allPois);
                     }
                 }
                 System.exit(0);
@@ -528,10 +520,10 @@ public class Main {
         frame.pack();
         frame.setVisible(true);
 
-        new OptionsWindow(map, new Dimension(300, 100)) {
+        new OptionsWindow(directionsGeocoderMapView, new Dimension(300, 100)) {
             @Override
             public void initContent(JWindow contentWindow) {
-                frame.add(map.controlPanel, BorderLayout.WEST);
+                frame.add(directionsGeocoderMapView.controlPanel, BorderLayout.WEST);
             }
         };
     }
