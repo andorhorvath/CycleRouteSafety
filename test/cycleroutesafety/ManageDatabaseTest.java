@@ -87,9 +87,9 @@ public class ManageDatabaseTest {
         String finishPoint = "";
         int routeLength = 0;
         String lastUpdateTime = "";
-        boolean plannedRoute = false;
+        int rank = 0;
         ManageDatabase instance = new ManageDatabase();
-        instance.createRoute(routeName, author, startPoint, finishPoint, routeLength, lastUpdateTime, plannedRoute);
+        instance.createRoute(routeName, author, startPoint, finishPoint, routeLength, lastUpdateTime, rank);
     }
 
     /**
@@ -131,11 +131,12 @@ public class ManageDatabaseTest {
         String finishPoint = "";
         int routeLength = 0;
         String lastUpdateTime = "";
-        boolean plannedRoute = false;
+        boolean plannedRoute = true;
+        int rank = 0;
         ManageDatabase instance = new ManageDatabase();
-        instance.modifyRoute(routeID, routeName, author, startPoint, finishPoint, routeLength, lastUpdateTime, plannedRoute);
+        instance.modifyRoute(routeID, routeName, author, startPoint, finishPoint, routeLength, lastUpdateTime, plannedRoute, rank);
     }
-
+    
     /**
      * Test of modifyPoi method, of class ManageDatabase.
      */
@@ -146,8 +147,9 @@ public class ManageDatabaseTest {
         double lat = 0.0;
         double lng = 0.0;
         int markerID = 0;
+        String placeDescription = "";
         ManageDatabase instance = new ManageDatabase();
-        instance.modifyPoi(poiID, lat, lng, markerID);
+        instance.modifyPoi(poiID, lat, lng, markerID, placeDescription);
     }
 
     /**
@@ -219,8 +221,8 @@ public class ManageDatabaseTest {
     public void testReadRoutes() {
         System.out.println("readRoutes");
         ManageDatabase instance = new ManageDatabase();
-        Route routeOne = new Route(1, "Városligeti út", "ahorvath", "Budapest, Kós Károly stny., 1146 Hungary", "Budapest, Pálma u. 6, 1146 Hungary", 1, "2018-05-12 19:51:09");
-        Route routeTwo = new Route(2, "Kiss Rozihoz", "ahorvath", "Nefelejcs utca 24", "Budapest, Pálma u. 6, 1146 Hungary", 1, "2018-05-12 19:22:37");
+        Route routeOne = new Route(1, "Városligeti út", "ahorvath", "Budapest, Kós Károly stny., 1146 Hungary", "Budapest, Pálma u. 6, 1146 Hungary", 1, "2018-05-12 19:51:09", 12);
+        Route routeTwo = new Route(2, "Kiss Rozihoz", "ahorvath", "Nefelejcs utca 24", "Budapest, Pálma u. 6, 1146 Hungary", 1, "2018-05-12 19:22:37", 15);
         //ArrayList<Route> expResult = [[1; Városligeti út; ahorvath; Budapest, Kós Károly stny., 1146 Hungary; Budapest, Pálma u. 6, 1146 Hungary; 1; 2018-05-12 19:51:09],
         //[2; Kiss Rozihoz; ahorvath; Nefelejcs utca 24; Budapest, Pálma u. 6, 1146 Hungary; 1; 2018-05-12 19:22:37]];
         ArrayList<Route> sampleDataExpectedResult = new ArrayList<>();

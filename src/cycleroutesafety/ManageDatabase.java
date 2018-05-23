@@ -72,7 +72,8 @@ public class ManageDatabase {
                         rs.getString("startPoint"),
                         rs.getString("finishPoint"),
                         rs.getInt("routeLength"),
-                        rs.getString("lastUpdateTime")
+                        rs.getString("lastUpdateTime"),
+                        rs.getInt("rank")
                 ));
             }
             conn.close();
@@ -165,7 +166,8 @@ public class ManageDatabase {
                     rs.getString("startPoint"),
                     rs.getString("finishPoint"),
                     rs.getInt("routeLength"),
-                    rs.getString("lastUpdateTime")
+                    rs.getString("lastUpdateTime"),
+                    rs.getInt("rank")
             );
             System.out.println(readRoute.toString());
             conn.close();
@@ -210,7 +212,7 @@ public class ManageDatabase {
      * @param finishPoint
      * @param routeLength
      * @param lastUpdateTime
-     * @param plannedRoute
+     * @param rank
      */
     public void createRoute(
             String routeName,
@@ -219,7 +221,8 @@ public class ManageDatabase {
             String finishPoint,
             int routeLength,
             String lastUpdateTime,
-            boolean plannedRoute) {
+ //           boolean plannedRoute,
+            int rank) {
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
             query = "INSERT INTO routes(routeName, "
@@ -227,13 +230,15 @@ public class ManageDatabase {
                     + "startPoint, "
                     + "finishPoint, "
                     + "routeLength, "
-                    + "lastUpdateTime) "
+                    + "lastUpdateTime, "
+                    + "rank) "
                     + "VALUES('" + routeName + "', "
                     + "'" + author + "', "
                     + "'" + startPoint + "', "
                     + "'" + finishPoint + "', "
                     + "'" + routeLength + "', "
-                    + "'" + lastUpdateTime + "')";
+                    + "'" + lastUpdateTime + "', "
+                    + "'" + rank + "')";
             PreparedStatement stm = conn.prepareStatement(query);
             stm.executeUpdate();
             query = "select last_insert_id() as last_id from routes";
@@ -286,7 +291,8 @@ public class ManageDatabase {
             for (int n = 0; n < newPois.size(); ++n) {
                 query = "INSERT INTO pois(lat, "
                         + "lng, "
-                        + "markerID) "
+                        + "markerID, "
+                        + "placeDescription) "
                         + "VALUES('" + newPois.get(n).getLat() + "', "
                         + "'" + newPois.get(n).getLng() + "', "
                         + "'" + newPois.get(n).getMarkerID() + "', "
@@ -313,6 +319,7 @@ public class ManageDatabase {
      * @param routeLength
      * @param lastUpdateTime
      * @param plannedRoute
+     * @param rank
      */
     public void modifyRoute(int routeID,
             String routeName,
@@ -321,7 +328,8 @@ public class ManageDatabase {
             String finishPoint,
             int routeLength,
             String lastUpdateTime,
-            boolean plannedRoute) {
+            boolean plannedRoute,
+            int rank) {
         try {
             conn = DriverManager.getConnection(dbDomain, dbUser, dbPassword);
             query = "UPDATE routes SET "
@@ -331,6 +339,7 @@ public class ManageDatabase {
                     + "finishPoint='" + finishPoint + "', "
                     + "routeLength='" + routeLength + "', "
                     + "lastUpdateTime='" + lastUpdateTime + "' "
+                    + "rank='" + rank + "' " 
                     + "WHERE routeID=" + routeID + "";
             PreparedStatement stm = conn.prepareStatement(query);
             System.out.println(query);

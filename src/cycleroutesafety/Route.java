@@ -20,6 +20,7 @@ public class Route {
     private String finishPoint;
     private int routeLength;
     private String lastUpdateTime;
+    private int rank;
 
     public Route() {
 
@@ -31,7 +32,8 @@ public class Route {
             String startPoint,
             String finishPoint,
             int routeLength,
-            String lastUpdateTime) {
+            String lastUpdateTime,
+            int rank) {
         this.routeID = routeID;
         this.routeName = routeName;
         this.author = author;
@@ -101,4 +103,13 @@ public class Route {
     public String getLastUpdateTime() {
         return this.lastUpdateTime;
     }
+
+    public int getRank() {
+        return rank;
+    }
+
+    public void setRank(int rank) {
+        this.rank = rank;
+    }
+    
 }

@@ -6,31 +6,13 @@
 package cycleroutesafety;
 
 import com.teamdev.jxmaps.LatLng;
-import com.teamdev.jxmaps.Map;
-import com.teamdev.jxmaps.MapBrowser;
-import com.teamdev.jxmaps.MapObject;
 import com.teamdev.jxmaps.Marker;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
-import javax.swing.ImageIcon;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -196,8 +178,9 @@ public class DirectionsGeocoderTest {
         System.out.println("createRoute");
         JTextArea messageBar = new JTextArea();
         String newRouteName = "";
+        int rank = 0;
         DirectionsGeocoder instance = new DirectionsGeocoder();
-        instance.createRoute(messageBar, newRouteName);
+        instance.createRoute(messageBar, newRouteName, rank);
     }
 
     /**
@@ -208,8 +191,9 @@ public class DirectionsGeocoderTest {
         System.out.println("modifyRoute");
         Route route = new Route();
         JTextArea messageBar = new JTextArea();
+        int rank = 0;
         DirectionsGeocoder instance = new DirectionsGeocoder();
-        instance.modifyRoute(route, messageBar);
+        instance.modifyRoute(route, messageBar, rank);
     }
 
     /**
@@ -234,10 +218,11 @@ public class DirectionsGeocoderTest {
         DirectionsGeocoder instance = new DirectionsGeocoder();
         ManageDatabase mdb = new ManageDatabase();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        int rank = 0;
         Date date = new Date();
         Route route = new Route();
         route.setRouteName("dummyTestName");
-        mdb.createRoute(route.getRouteName(), "ahorvath", "Palma utca 6", "Andrassy ut 5", 1, dateFormat.format(date), true);
+        mdb.createRoute(route.getRouteName(), "ahorvath", "Palma utca 6", "Andrassy ut 5", 1, dateFormat.format(date), rank);
         
         instance.deleteRoute(route, messageBar);
     }

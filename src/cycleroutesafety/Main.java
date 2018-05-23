@@ -19,15 +19,11 @@ import java.util.logging.Logger;
 
 public class Main {
 
-    //public static final int MIN_ZOOM = 0;
-    //public static final int MAX_ZOOM = 21;
-    //public static final int ZOOM_VALUE = 10; //map.html value
-    //TODO: delete this public static Route[] allRoutes;
     public static ArrayList<Route> allRoutes;
     public static Color off = Color.lightGray;
     public static Color on = Color.white;
     public static File tempStaticMarkerFileStore = null;
-    public static final double radiusOfClose = 0.01;
+    public static final double RADIUS_OF_CLOSE = 0.01;
     
     public static void main(String[] args) {
 
@@ -39,20 +35,32 @@ public class Main {
         frame.add(directionsGeocoderMapView, BorderLayout.CENTER);
 
         JTextArea messageBar = new JTextArea();
-        //messageBar.setFont(Font.decode("MS Gothic"));
 
         DirectionsGeocoder.addText(messageBar, "Betöltés kész");
 
         JPanel messagePanel = new JPanel();
         messagePanel.add(messageBar);
 
+        final JLabel rankHeader = new JLabel();
+        rankHeader.setText("Rang: ");
+        
+        final JLabel routeRank = new JLabel();
+        routeRank.setText("---");
+        
         final JTextField routeNameBar = new JTextField();
         routeNameBar.setEditable(false);
-        String text = "Nincs útvonal betöltve...";//map.textFromTo(map.getFromField().getText(), map.getToField().getText());
+        String text = "Nincs útvonal betöltve...";
         routeNameBar.setText(text);
+        
+        final JLabel nameHeader = new JLabel("                            Betöltött útvonal: ");
+        // making the text bold
+        Font f = nameHeader.getFont();
+        nameHeader.setFont(f.deriveFont(f.getStyle() | Font.BOLD));
 
         JPanel routeNamePane = new JPanel(new FlowLayout());
-        routeNamePane.add(new JLabel(" Betöltött útvonal: "));
+        routeNamePane.add(rankHeader);
+        routeNamePane.add(routeRank);
+        routeNamePane.add(nameHeader);
         routeNamePane.add(routeNameBar);
 
         // building the Right panel to manage routes
@@ -101,7 +109,7 @@ public class Main {
             //persist currently displayed route to DB
             String routeSavingName = JOptionPane.showInputDialog(
                 "Kérem adja meg milyen néven mentse az útvonalat: ");
-            directionsGeocoderMapView.createRoute(messageBar, routeSavingName);
+            directionsGeocoderMapView.createRoute(messageBar, routeSavingName, RADIUS_OF_CLOSE);
             routeNameBar.setText(routeSavingName);
             //re-read the DB for routes to update the program
             allRoutes = manageDatabase.readRoutes();
@@ -112,12 +120,14 @@ public class Main {
             }
             //chosing the last element
             allRoutesList.select(allRoutesList.getItem(allRoutesList.getItemCount() - 1));
+            int currentRankToDisplay = allRoutes.get(allRoutes.size() -1).getRank();
+            routeRank.setText(Integer.toString(currentRankToDisplay));
         });
 
         modifyRoute.addActionListener((ActionEvent ae) -> {
             int selectedIndexInChoise = allRoutesList.getSelectedIndex();
             if (selectedIndexInChoise > 0) {
-                directionsGeocoderMapView.modifyRoute(allRoutes.get(selectedIndexInChoise - 1), messageBar);
+                directionsGeocoderMapView.modifyRoute(allRoutes.get(selectedIndexInChoise - 1), messageBar, RADIUS_OF_CLOSE);
                 allRoutes = manageDatabase.readRoutes();
                 allRoutesList.removeAll();
                 allRoutesList.add("----- Válassz! -----");
@@ -126,6 +136,9 @@ public class Main {
                 }
                 allRoutesList.select(selectedIndexInChoise);
                 routeNameBar.setText(allRoutesList.getSelectedItem());
+                
+                int currentRankToDisplay = allRoutes.get(allRoutes.size() -1).getRank();
+                routeRank.setText(Integer.toString(currentRankToDisplay));
             }
         });
 
@@ -138,12 +151,17 @@ public class Main {
                 // when first starting the program, it does not have any route
                 // when loading a route, we need to init the nearPois set
                 directionsGeocoderMapView.nearPois.clear();
-                directionsGeocoderMapView.nearPois.addAll(directionsGeocoderMapView.computeNearPois(radiusOfClose));
+                directionsGeocoderMapView.nearPois.addAll(directionsGeocoderMapView.computeNearPois(RADIUS_OF_CLOSE));
+                
+                //directionsGeocoderMapView.jxMarkersOnMap.clear();
+                int currentRankToDisplay = directionsGeocoderMapView.nearPois.size();
+                routeRank.setText(Integer.toString(currentRankToDisplay));
             } else {
                 DirectionsGeocoder.addText(messageBar, "Nincs mit megnyitni");
                 JOptionPane.showMessageDialog(null, "Nincs mit megnyitni!");
                 modifyRoute.setEnabled(false);
                 routeNameBar.setText("");
+                routeRank.setText("---");
             }
         });
 
@@ -164,16 +182,10 @@ public class Main {
                 for (selectedIndexInChoise = 0; selectedIndexInChoise < allRoutes.size(); ++selectedIndexInChoise) {
                     allRoutesList.add(allRoutes.get(selectedIndexInChoise).getRouteName());
                 }
+                
+            routeNameBar.setText("Nincs útvonal betöltve...");
+            routeRank.setText("---");
         });
-
-        /*clearRoute.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent ae) {
-                //az első elem kiválasztása
-                allRoutesList.select(allRoutesList.getItem(1));
-                routeNameBar.setText("");
-            }
-        });*/
         
         allRoutesList.addItemListener((ItemEvent e) -> {
             int selectedIndexInChoice = allRoutesList.getSelectedIndex();

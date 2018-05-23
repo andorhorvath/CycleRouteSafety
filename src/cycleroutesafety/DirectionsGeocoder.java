@@ -72,7 +72,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     public ArrayList<LatLng> crossRoads = new ArrayList<>();
     public HashSet<Marker> nearPois = new HashSet<>();
     
-    JPanel controlPanel;
+    public JPanel controlPanel;
     public Map map;
     /**
      * The constructor creates the map object, while also creating and
@@ -119,8 +119,9 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
                         final Marker marker = new Marker(map);
                         String poiPlaceDescription = JOptionPane.showInputDialog(
                         "Kérem adjon meg leírást a POI-hoz: ");
-                        Poi newPoi = new Poi(allPois.get(allPois.size() - 1).getPoiID() + 1, mouseEvent.latLng().getLat(), mouseEvent.latLng().getLng(), actualMarkerType, poiPlaceDescription);
-                        System.out.println("## DEBUG Poi is: " + newPoi.toString());
+                        Poi newPoi = new Poi(allPois.get(allPois.size() - 1).getPoiID() + 1,
+                                mouseEvent.latLng().getLat(), mouseEvent.latLng().getLng(),
+                                actualMarkerType, poiPlaceDescription);
                         allPois.add(newPoi);
                         addPoi(newPoi, marker);
                     }
@@ -150,7 +151,6 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
             @Override
             public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
                 // show InfoWindow
-                System.out.println("## DEBUG jxMapsMarker.eventListener: CLICK");
                 final InfoWindow window = new InfoWindow(map);
                 // Setting html content to the information window
                 window.setContent("<p>" + poi.getPlaceDescription() + "</p>");
@@ -165,7 +165,6 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
             @Override
             public void onEvent(com.teamdev.jxmaps.MouseEvent mouseEvent) {
                 // Removing marker from the map
-                System.out.println("## DEBUG jxMapsMarker.eventListener: RIGHTclick");
                 ArrayList<Poi> stayPois = new ArrayList<>();
                 for (int n = 0; n < allPois.size(); ++n) {
                     if (!(allPois.get(n).getLat() == jxMapsMarker.getPosition().getLat()
@@ -309,10 +308,12 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
         // adding ActionListener that would perform the Directions calculation
         // when hitting enter or search icon on the two fields
         fromField.addActionListener((ActionEvent ae) -> {
+            crossRoads.clear();
             calculateDirection();
             updateFromFieldText(fromField.getText());
         });
         toField.addActionListener((ActionEvent ae) -> {
+            crossRoads.clear();
             calculateDirection();
             updateToFieldText(toField.getText());
         });
@@ -467,16 +468,19 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      *
      * @param messageBar
      * @param newRouteName
+     * @param radius
      */
-    public void createRoute(JTextArea messageBar, String newRouteName) {
+    public void createRoute(JTextArea messageBar, String newRouteName, double radius) {
         ManageDatabase manageDatabase = new ManageDatabase();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date date = new Date();
         String textFrom = fromField.getText();
         String textTo = toField.getText();
 
+        int rank = nearPois.size();
+        
         manageDatabase.createRoute(newRouteName,
-                "ahorvath", textFrom, textTo, 1, dateFormat.format(date), true);
+                "ahorvath", textFrom, textTo, 1, dateFormat.format(date), rank);
         String text = "Sikeres mentés: " + newRouteName;
         addText(messageBar, text);
         JOptionPane.showMessageDialog(null, text);
@@ -509,16 +513,17 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * @param route
      * @param messageBar
      */
-    public void modifyRoute(Route route, JTextArea messageBar) {
+    public void modifyRoute(Route route, JTextArea messageBar, double radius) {
         ManageDatabase manageDatabase = new ManageDatabase();
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date date = new Date();
         String textFrom = fromField.getText();
         String textTo = toField.getText();
 
+        int rank = nearPois.size();
 // getter setter a fejlecre
         manageDatabase.modifyRoute(route.getRouteID(), route.getRouteName(),
-                "ahorvath", textFrom, textTo, 1, dateFormat.format(date), true);
+                "ahorvath", textFrom, textTo, 1, dateFormat.format(date), true, rank);
         String text = "Sikeres útvonal-felülírás történt: " + route.getRouteName() + " útvonalra";
         addText(messageBar, text);
         JOptionPane.showMessageDialog(null, text);
@@ -535,6 +540,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
     public void openRoute(Route route, JTextArea messageBar) {
         fromField.setText(route.getStartPoint());
         toField.setText(route.getFinishPoint());
+        this.crossRoads.clear();
         calculateDirection();
         String text = "Sikeres betöltés: " + route.getRouteName();
         addText(messageBar, text);
