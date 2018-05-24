@@ -1,5 +1,6 @@
 package cycleroutesafety;
 
+import com.teamdev.jxmaps.Marker;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -120,7 +122,8 @@ public class Main {
             }
             //chosing the last element
             allRoutesList.select(allRoutesList.getItem(allRoutesList.getItemCount() - 1));
-            int currentRankToDisplay = allRoutes.get(allRoutes.size() -1).getRank();
+            //int currentRankToDisplay = allRoutes.get(allRoutes.size() -1).getRank();
+            int currentRankToDisplay = directionsGeocoderMapView.nearPois.size();
             routeRank.setText(Integer.toString(currentRankToDisplay));
         });
 
@@ -137,7 +140,8 @@ public class Main {
                 allRoutesList.select(selectedIndexInChoise);
                 routeNameBar.setText(allRoutesList.getSelectedItem());
                 
-                int currentRankToDisplay = allRoutes.get(allRoutes.size() -1).getRank();
+                //int currentRankToDisplay = allRoutes.get(allRoutes.size() -1).getRank();
+                int currentRankToDisplay = directionsGeocoderMapView.nearPois.size();
                 routeRank.setText(Integer.toString(currentRankToDisplay));
             }
         });
@@ -455,7 +459,11 @@ public class Main {
                 // then we need to recount the NearPois
                 if (directionsGeocoderMapView.arePoisNeedDbPersist(directionsGeocoderMapView.allPois, directionsGeocoderMapView.persistedPois)) {
                     directionsGeocoderMapView.nearPois.clear();
-                    directionsGeocoderMapView.nearPois.addAll(directionsGeocoderMapView.computeNearPois(0.05));
+                    HashSet<Marker> tempHashSet = directionsGeocoderMapView.computeNearPois(RADIUS_OF_CLOSE);
+                    //directionsGeocoderMapView.nearPois.addAll(directionsGeocoderMapView.computeNearPois(RADIUS_OF_CLOSE));
+                    for (Marker eachJxMark : tempHashSet ) {
+                        directionsGeocoderMapView.nearPois.add(eachJxMark);
+                    }
                 }
                 directionsGeocoderMapView.setOnMapPoisHided();
                 directionsGeocoderMapView.setNearPoisVisible();

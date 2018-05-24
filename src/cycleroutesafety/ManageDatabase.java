@@ -338,8 +338,8 @@ public class ManageDatabase {
                     + "startPoint='" + startPoint + "', "
                     + "finishPoint='" + finishPoint + "', "
                     + "routeLength='" + routeLength + "', "
-                    + "lastUpdateTime='" + lastUpdateTime + "' "
-                    + "rank='" + rank + "' " 
+                    + "lastUpdateTime='" + lastUpdateTime + "', "
+                    + "rank=" + rank + " " 
                     + "WHERE routeID=" + routeID + "";
             PreparedStatement stm = conn.prepareStatement(query);
             System.out.println(query);
@@ -375,7 +375,7 @@ public class ManageDatabase {
                     + "lat='" + lat + "', "
                     + "lat='" + lng + "', "
                     + "markerID='" + markerID + "', "
-                    + "placeDescription='" + placeDescription + "',"
+                    + "placeDescription='" + placeDescription + "' "
                     + "WHERE poiID=" + poiID + "";
             PreparedStatement stm = conn.prepareStatement(query);
             stm.executeUpdate();

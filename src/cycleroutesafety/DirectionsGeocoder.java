@@ -66,7 +66,7 @@ public final class DirectionsGeocoder extends MapView implements ControlPanel {
      * Contains the persisted POI's every time
      */
     public ArrayList<Poi> persistedPois = new ArrayList<>();
-    public ArrayList<Marker> jxMarkersOnMap = new ArrayList<>();
+    public ArrayList<Marker> jxMarkersOnMap;
     public ArrayList<MyMarker> allMarkers;
 
     public ArrayList<LatLng> crossRoads = new ArrayList<>();
